@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>ERNESCO Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; background: #f7f7f7; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: #222; color: #fff; padding: 10px 20px; }
+        .nav-left { display: flex; align-items: center; }
+        .nav-icon { margin-right: 15px; cursor: pointer; }
+        .nav-right { display: flex; align-items: center; }
+        .btn { background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 10px; }
+        .btn:disabled { background: #aaa; }
+        .features { margin: 30px auto; max-width: 600px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 24px; }
+        .features h2 { margin-top: 0; }
+        .feature-links { margin: 20px 0; }
+        .feature-links a { display: inline-block; margin-right: 20px; color: #007bff; text-decoration: none; font-weight: bold; }
+        .feature-links a:hover { text-decoration: underline; }
+        .email-count { color: #555; font-size: 0.95em; margin-left: 8px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #f4f4f4; }
+        tr:hover { background: #f1f1f1; }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+        <div class="nav-left">
+            <a href="{{ url_for('settings') }}" title="Settings" class="nav-icon">
+                <span style="font-size: 1.5em;">&#9881;</span>
+            </a>
+        </div>
+        <div style="font-size: 1.2em; font-weight: bold;">ERNESCO</div>
+        <div class="nav-right">
+            {% if not email_set %}
+            <a href="{{ url_for('connect_email') }}" class="btn">Connect Email</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="features">
+        <h2>Features</h2>
+        <div class="feature-links">
+            <a href="{{ url_for('receive_emails') }}">Receive Emails <span class="email-count">({{ unread_count }})</span></a>
+            <a href="{{ url_for('summary') }}">Summary</a>
+            <a href="{{ url_for('settings') }}">Settings</a>
+        </div>
+        <ul>
+            <li>Automatic AI-powered email replies</li>
+            <li>Custom settings and preferences</li>
+            <li>Connect and manage your email account</li>
+            <li>View recent conversations and summaries</li>
+        </ul>
+    </div>
+    <div style="max-width: 600px; margin: 30px auto;">
+        <h3>Recent Conversations</h3>
+        <table>
+            <tr style="background:#eee;">
+                <th style="padding:8px; text-align:left;">Sender</th>
+                <th style="padding:8px; text-align:left;">Message</th>
+                <th style="padding:8px; text-align:left;">Response</th>
+                <th style="padding:8px; text-align:left;">Time</th>
+            </tr>
+            {% for log in logs %}
+            <tr style="border-bottom:1px solid #ddd;">
+                <td style="padding:8px;">{{ log.sender }}</td>
+                <td style="padding:8px; max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ log.message[:60] }}{% if log.message|length > 60 %}...{% endif %}</td>
+                <td style="padding:8px; max-width:200px; overflow:hidden; text-overflow:ellipsis;">{{ log.response[:60] }}{% if log.response|length > 60 %}...{% endif %}</td>
+                <td style="padding:8px;">{{ log.timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>

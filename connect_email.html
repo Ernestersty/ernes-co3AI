@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect Email</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 24px; }
+        h2 { margin-top: 0; }
+        .back-link { margin-bottom: 20px; display: inline-block; color: #007bff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        label { display: block; margin-top: 15px; }
+        input[type="text"], input[type="email"], input[type="password"] { width: 100%; padding: 8px; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc; }
+        .form-group { margin-bottom: 15px; }
+        .btn { background: #007bff; color: #fff; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+        .message { color: green; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back-link">&larr; Back to Dashboard</a>
+        <h2>Connect Email</h2>
+        {% if message %}<div class="message">{{ message }}</div>{% endif %}
+        <form method="post">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password / App Password</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <div class="form-group">
+                <label for="imap_server">IMAP Server</label>
+                <input type="text" id="imap_server" name="imap_server" value="imap.gmail.com">
+            </div>
+            <div class="form-group">
+                <label for="smtp_server">SMTP Server</label>
+                <input type="text" id="smtp_server" name="smtp_server" value="smtp.gmail.com">
+            </div>
+            <button type="submit" class="btn">Save Email Settings</button>
+        </form>
+    </div>
+</body>
+</html>

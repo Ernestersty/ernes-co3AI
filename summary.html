@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Summary of Senders</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; }
+        .container { max-width: 500px; margin: 40px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 24px; }
+        h2 { margin-top: 0; }
+        .back-link { margin-bottom: 20px; display: inline-block; color: #007bff; text-decoration: none; }
+        .back-link:hover { text-decoration: underline; }
+        ul { padding-left: 20px; }
+        li { margin-bottom: 8px; }
+        .no-senders { color: #888; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="{{ url_for('index') }}" class="back-link">&larr; Back to Dashboard</a>
+        <h2>Summary of Senders ({{ count }})</h2>
+        {% if sender_names and sender_names|length > 0 %}
+        <ul>
+            {% for name in sender_names %}
+            <li>{{ name }}</li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="no-senders">No senders found.</div>
+        {% endif %}
+    </div>
+</body>
+</html>
