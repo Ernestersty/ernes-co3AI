@@ -8,5 +8,5 @@ textblob
 gTTS
 python-telegram-bot
 gunicorn
-mimetypes
+
 
