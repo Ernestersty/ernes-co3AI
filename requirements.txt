@@ -1,0 +1,12 @@
+Flask
+Flask-SQLAlchemy
+python-dotenv
+openai
+schedule
+langdetect
+textblob
+gTTS
+python-telegram-bot
+gunicorn
+mimetypes
+
