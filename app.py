@@ -56,3 +56,7 @@ def dashboard():
 
 if __name__ == "__main__":
     app.run(debug=True)
+supabase.table("email_logs").update({
+    "ai_reply": reply,
+    "status": "replied"
+}).eq("id", email_id).execute()
