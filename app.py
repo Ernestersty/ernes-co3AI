@@ -60,3 +60,7 @@ supabase.table("email_logs").update({
     "ai_reply": reply,
     "status": "replied"
 }).eq("id", email_id).execute()
+def send_email(to, subject, body):
+    # SMTP logic (Gmail/Yahoo)
+    pass
+    
