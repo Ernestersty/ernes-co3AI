@@ -1,5 +1,7 @@
 from flask import Flask, send_from_directory
+from dotenv import load_dotenv
 import os
+load_dotenv()
 import openai
 openai.api_key = os.getenv("OPENAI_API_KEY")
 # Expose 'app' for gunicorn: `gunicorn app:app`
