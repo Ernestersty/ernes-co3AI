@@ -72,3 +72,12 @@
     </div>
 </body>
 </html>
+<h2>Incoming Emails</h2>
+{% for email in emails %}
+  <div>
+    <h4>{{ email.subject }}</h4>
+    <p>{{ email.body }}</p>
+    <strong>AI Reply:</strong>
+    <p>{{ email.ai_reply }}</p>
+  </div>
+{% endfor %}
