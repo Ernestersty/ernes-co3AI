@@ -1,6 +1,7 @@
 from flask import Flask, send_from_directory
 import os
-
+import openai
+openai.api_key = os.getenv("OPENAI_API_KEY")
 # Expose 'app' for gunicorn: `gunicorn app:app`
 app = Flask(__name__, static_folder='.', static_url_path='')
 
@@ -37,6 +38,15 @@ def save_email(sender, subject, body, user_id):
         "body": body,
         "user_id": user_id
     }).execute()
+    def generate_reply(email_text):
+        response = openai.chatcompletion.create(
+            model="gpt-4o-mini",
+            messages=[
+                {"role": "system" , "content": "You are a proffessional email assistant."},
+                {"role": "user" , "content": email_text}
+            ]
+        )
+        return response.choices[0].message.content
 @app.route("/")
 def dashboard():
     data = supabase.table("email_logs").select("*").execute()
