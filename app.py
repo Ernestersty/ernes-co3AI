@@ -30,7 +30,13 @@ supabase = create_client(
     os.getenv("SUPABASE_URL"),
     os.getenv("SUPABASE_SERVICE_KEY")
 )
-
+def save_email(sender, subject, body, user_id):
+    supabase.table("email_logs").insert({
+        "sender": sender,
+        "subject": subject,
+        "body": body,
+        "user_id": user_id
+    }).execute()
 @app.route("/")
 def dashboard():
     data = supabase.table("email_logs").select("*").execute()
