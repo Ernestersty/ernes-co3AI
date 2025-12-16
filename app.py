@@ -20,3 +20,21 @@ if __name__ == '__main__':
     # Use PORT env var provided by Render; fallback to 5000 locally
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+from flask import Flask, request, jsonify, render_template
+from supabase import create_client
+import os
+
+app = Flask(__name__)
+
+supabase = create_client(
+    os.getenv("SUPABASE_URL"),
+    os.getenv("SUPABASE_SERVICE_KEY")
+)
+
+@app.route("/")
+def dashboard():
+    data = supabase.table("email_logs").select("*").execute()
+    return render_template("index.html", emails=data.data)
+
+if __name__ == "__main__":
+    app.run(debug=True)
