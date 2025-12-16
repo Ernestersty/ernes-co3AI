@@ -8,5 +8,6 @@ textblob
 gTTS
 python-telegram-bot
 gunicorn
+supabase
 
 
