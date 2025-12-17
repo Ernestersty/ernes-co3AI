@@ -1,13 +1,13 @@
-Flask
-Flask-SQLAlchemy
-python-dotenv
-openai
-schedule
-langdetect
-textblob
-gTTS
-python-telegram-bot
-gunicorn
-supabase
+Flask==3.1.2
+Flask-SQLAlchemy==3.1.1
+python-dotenv==1.2.1
+openai==2.13.0
+schedule==1.2.2
+langdetect==1.0.9
+textblob==0.19.0
+gTTS==2.5.4
+python-telegram-bot==20.8
+gunicorn==23.0.0
+supabase==2.27.0
 
 
