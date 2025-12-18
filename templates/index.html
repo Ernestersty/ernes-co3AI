@@ -61,6 +61,9 @@
             max-width: 400px;
             margin: 0 auto;
             text-align: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 30px;
         }
 
         .form-group { margin-bottom: 15px; text-align: left; }
@@ -94,10 +97,13 @@
             font-weight: 500;
             cursor: pointer;
             margin-top: 10px;
+            transition: opacity 0.2s;
         }
 
+        .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
         /* --- EMAIL FEED SECTION --- */
-        .activity-hub { margin-top: 50px; }
+        .activity-hub { margin-top: 20px; }
 
         .section-header {
             display: flex;
@@ -106,12 +112,13 @@
             margin-bottom: 25px;
         }
 
+        .email-grid { display: flex; flex-direction: column; gap: 20px; }
+
         .email-card {
             background: #ffffff;
             border: 1px solid #d2d2d7;
             border-radius: 20px;
             padding: 24px;
-            margin-bottom: 20px;
             transition: transform 0.2s ease;
         }
 
@@ -154,7 +161,7 @@
         </header>
 
         <section id="setupSection" class="setup-section">
-            <p style="color: var(--apple-gray); font-size: 19px; margin-bottom: 30px;">Account Registration</p>
+            <p style="color: var(--apple-gray); font-size: 18px; margin-bottom: 25px;">Account Registration</p>
             <form id="setupForm">
                 <div class="form-group">
                     <input type="email" id="email" placeholder="Work Email" required>
@@ -171,8 +178,8 @@
 
         <section id="dashboardSection" class="activity-hub">
             <div class="section-header">
-                <h2 style="font-size: 24px; margin: 0;">Incoming Emails</h2>
-                <span style="background: #e8f2ff; color: var(--apple-blue); padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600;">LIVE</span>
+                <h2 style="font-size: 22px; margin: 0;">Incoming Emails</h2>
+                <span style="background: #e8f2ff; color: var(--apple-blue); padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">LIVE FEED</span>
             </div>
 
             <div class="email-grid">
@@ -182,11 +189,11 @@
                         <h4 style="margin: 0 0 10px 0; font-size: 18px;">{{ email.subject }}</h4>
                         <span style="color: var(--apple-gray); font-size: 12px;">Recent</span>
                     </div>
-                    <p style="font-size: 15px; color: #424245;">{{ email.body }}</p>
+                    <p style="font-size: 15px; color: #424245; line-height: 1.5;">{{ email.body }}</p>
 
                     <div class="ai-reply-box">
                         <div class="ai-header"><span>✨</span> AI INTELLIGENCE</div>
-                        <p style="margin: 0; font-size: 15px;">{{ email.ai_reply }}</p>
+                        <p style="margin: 0; font-size: 15px; color: #1d1d1f;">{{ email.ai_reply }}</p>
                     </div>
                 </div>
                 {% endfor %}
@@ -195,9 +202,11 @@
     </div>
 
     <script>
-        // Supabase Initialization
-        const supabaseUrl = 'YOUR_SUPABASE_PROJECT_URL';
-        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        // 1. SUPABASE CONFIGURATION
+        const supabaseUrl = 'https://rlmbiftjqfwjfiplycud.supabase.co';
+        // IMPORTANT: Paste your ANON PUBLIC KEY between these quotes
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY'; 
+        
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
         const form = document.getElementById('setupForm');
@@ -205,6 +214,8 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
+            
+            // UI Feedback
             btn.disabled = true;
             btn.innerText = 'Syncing...';
 
@@ -214,24 +225,35 @@
                 phone: document.getElementById('phone').value,
             };
 
-            const { error } = await supabaseClient
-                .from('profiles')
-                .insert([userData]);
+            try {
+                // 2. INSERT DATA INTO SUPABASE
+                const { error } = await supabaseClient
+                    .from('profiles')
+                    .insert([userData]);
 
-            if (error) {
-                alert('Error: ' + error.message);
+                if (error) {
+                    console.error("Supabase Error:", error);
+                    alert('Could not connect: ' + error.message);
+                    btn.disabled = false;
+                    btn.innerText = 'Connect Inbox';
+                } else {
+                    alert('Successfully connected to ERNESCO!');
+                    // 3. Refresh page to show the dashboard
+                    window.location.reload(); 
+                }
+            } catch (err) {
+                console.error("System Error:", err);
+                alert("An unexpected error occurred. Check the console.");
                 btn.disabled = false;
                 btn.innerText = 'Connect Inbox';
-            } else {
-                alert('Successfully connected!');
-                // In a real app, you'd hide the form and show the emails here
             }
         });
     </script>
 </body>
 </html>
-           
             
+               
+    
             
        
             
