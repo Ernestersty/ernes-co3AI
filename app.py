@@ -1,68 +1,54 @@
 import os
-from flask import Flask, send_from_directory, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from dotenv import load_dotenv
 from supabase import create_client
 import openai
 
-# Load environment variables (from .env file locally, or Render settings in production)
 load_dotenv()
 
 app = Flask(__name__)
 
-# --- CONFIGURATION & SAFETY CHECKS ---
+# --- CONFIGURATION ---
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
+# Use Service Key for backend to bypass RLS if needed
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
 
-# This prevents the "Exception on / [GET]" if keys are missing
 if not SUPABASE_URL or not SUPABASE_KEY:
-    print("CRITICAL: Supabase credentials missing! Check Render Environment Variables.")
+    print("CRITICAL: Supabase credentials missing!")
 
 openai.api_key = OPENAI_KEY
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- DATABASE & AI LOGIC ---
+# --- DATABASE LOGIC (Names matched to index.html) ---
 
-def save_email(sender, subject, body, user_id):
-    """Saves a new email to Supabase and marks it as processing."""
+def save_email(sender, subject, body, ai_reply, user_id):
+    """Saves a new email. Column names here must match your Supabase table!"""
     return supabase.table("activity_logs").insert({
         "user_owner": user_id,
         "sender_name": sender,
-        "original_email": body,
-        "status": "processing"
+        "subject": subject,       # Matches email.subject in HTML
+        "body": body,             # Matches email.body in HTML
+        "ai_reply": ai_reply,     # Matches email.ai_reply in HTML
+        "status": "replied"
     }).execute()
-
-def generate_reply(email_text, tone="Professional", language="English"):
-    """Uses OpenAI to generate a draft response."""
-    if not openai.api_key:
-        return "AI Error: OpenAI Key not configured."
-        
-    response = openai.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": f"You are a professional email assistant. Reply in a {tone} tone and use {language}."},
-            {"role": "user", "content": email_text}
-        ]
-    )
-    return response.choices[0].message.content
 
 # --- ROUTES ---
 
 @app.route('/')
 def index():
-    """Main Dashboard: Fetches all emails from Supabase and shows them on index.html"""
+    """Main Dashboard: Fetches and displays the feed."""
     try:
-        # Fetch data for the main dashboard
-        data = supabase.table("activity_logs").select("*").order("created_at", desc=True).execute()
-        return render_template('index.html', emails=data.data)
+        # Fetching all logs from the 'activity_logs' table
+        response = supabase.table("activity_logs").select("*").order("created_at", desc=True).execute()
+        return render_template('index.html', emails=response.data)
     except Exception as e:
         print(f"Dashboard Error: {e}")
-        # Return empty list if database fails so the page doesn't crash
         return render_template('index.html', emails=[])
 
 @app.route('/pending-actions')
 def pending_actions():
-    """Status Page: Shows progress bar and emails still being processed."""
+    """Calculates progress and shows pending tasks."""
     try:
         response = supabase.table("activity_logs").select("*").execute()
         all_logs = response.data
@@ -82,21 +68,15 @@ def pending_actions():
                                percentage=percentage)
     except Exception as e:
         print(f"Pending Actions Error: {e}")
-        return "Database Connection Error. Check logs."
+        return "Database Connection Error. Check Render Logs."
 
-# Serve other static files (Settings, etc.)
+# Serve other pages if you add them later (settings.html, etc.)
 @app.route('/<path:filename>')
-def static_files(filename):
-    if os.path.exists(filename) and not filename.startswith('.'):
-        if filename.endswith('.html'):
-            return render_template(filename)
-        return send_from_directory('.', filename)
+def other_pages(filename):
+    if filename.endswith('.html'):
+        return render_template(filename)
     return 'Not Found', 404
-
-# --- START SERVER ---
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    # debug=False for production/Render
     app.run(host='0.0.0.0', port=port, debug=True)
-
