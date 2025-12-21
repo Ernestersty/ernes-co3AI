@@ -32,7 +32,7 @@
             animation: fadeIn 0.8s ease-out;
         }
 
-        /* --- BRANDING HEADER --- */
+        /* --- BRANDING --- */
         .brand-header {
             display: flex;
             flex-direction: column;
@@ -56,7 +56,7 @@
             margin: 0;
         }
 
-        /* --- SETUP FORM SECTION --- */
+        /* --- SETUP FORM --- */
         .setup-section {
             max-width: 400px;
             margin: 0 auto;
@@ -97,12 +97,11 @@
             font-weight: 500;
             cursor: pointer;
             margin-top: 10px;
-            transition: opacity 0.2s;
         }
 
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-        /* --- EMAIL FEED SECTION --- */
+        /* --- EMAIL FEED --- */
         .activity-hub { margin-top: 20px; }
 
         .section-header {
@@ -112,19 +111,13 @@
             margin-bottom: 25px;
         }
 
-        .email-grid { display: flex; flex-direction: column; gap: 20px; }
-
         .email-card {
             background: #ffffff;
             border: 1px solid #d2d2d7;
             border-radius: 20px;
             padding: 24px;
+            margin-bottom: 20px;
             transition: transform 0.2s ease;
-        }
-
-        .email-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
         }
 
         .ai-reply-box {
@@ -189,13 +182,15 @@
                         <h4 style="margin: 0 0 10px 0; font-size: 18px;">{{ email.subject }}</h4>
                         <span style="color: var(--apple-gray); font-size: 12px;">Recent</span>
                     </div>
-                    <p style="font-size: 15px; color: #424245; line-height: 1.5;">{{ email.body }}</p>
+                    <p style="font-size: 15px; color: #424245;">{{ email.body }}</p>
 
                     <div class="ai-reply-box">
                         <div class="ai-header"><span>✨</span> AI INTELLIGENCE</div>
-                        <p style="margin: 0; font-size: 15px; color: #1d1d1f;">{{ email.ai_reply }}</p>
+                        <p style="margin: 0; font-size: 15px;">{{ email.ai_reply }}</p>
                     </div>
                 </div>
+                {% else %}
+                <p style="text-align: center; color: var(--apple-gray); margin-top: 40px;">No emails found. Connect your inbox to begin.</p>
                 {% endfor %}
             </div>
         </section>
@@ -204,8 +199,8 @@
     <script>
         // 1. SUPABASE CONFIGURATION
         const supabaseUrl = 'https://rlmbiftjqfwjfiplycud.supabase.co';
-        // IMPORTANT: Paste your ANON PUBLIC KEY between these quotes
-        const supabaseKey = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbWJpZnRqcWZ3amZpcGx5Y3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTc1ODMsImV4cCI6MjA4MTQzMzU4M30.TA5-ap09RMpil1yEaPtW5M3j-UG5-IZmgzjYrRzaBjI'; 
+        // FIXED: Quotes added correctly below
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbWJpZnRqcWZ3amZpcGx5Y3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTc1ODMsImV4cCI6MjA4MTQzMzU4M30.TA5-ap09RMpil1yEaPtW5M3j-UG5-IZmgzjYrRzaBjI'; 
         
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 
@@ -214,8 +209,6 @@
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            // UI Feedback
             btn.disabled = true;
             btn.innerText = 'Syncing...';
 
@@ -226,24 +219,21 @@
             };
 
             try {
-                // 2. INSERT DATA INTO SUPABASE
                 const { error } = await supabaseClient
                     .from('profiles')
                     .insert([userData]);
 
                 if (error) {
-                    console.error("Supabase Error:", error);
-                    alert('Could not connect: ' + error.message);
+                    alert('Error: ' + error.message);
                     btn.disabled = false;
                     btn.innerText = 'Connect Inbox';
                 } else {
                     alert('Successfully connected to ERNESCO!');
-                    // 3. Refresh page to show the dashboard
                     window.location.reload(); 
                 }
             } catch (err) {
-                console.error("System Error:", err);
-                alert("An unexpected error occurred. Check the console.");
+                console.error(err);
+                alert("Connection error. Check browser console.");
                 btn.disabled = false;
                 btn.innerText = 'Connect Inbox';
             }
@@ -251,13 +241,8 @@
     </script>
 </body>
 </html>
-            
-               
-    
-            
+
+        
+           
        
-            
-       
-        
-        
-        
+           
