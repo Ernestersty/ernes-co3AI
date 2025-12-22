@@ -11,7 +11,6 @@ app = Flask(__name__)
 # --- CONFIGURATION ---
 OPENAI_KEY = os.getenv("OPENAI_API_KEY")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
-# Use Service Key for backend to bypass RLS if needed
 SUPABASE_KEY = os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
@@ -20,26 +19,19 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 openai.api_key = OPENAI_KEY
 supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
 
-# --- DATABASE LOGIC (Names matched to index.html) ---
-
-def save_email(sender, subject, body, ai_reply, user_id):
-    """Saves a new email. Column names here must match your Supabase table!"""
-    return supabase.table("activity_logs").insert({
-        "user_owner": user_id,
-        "sender_name": sender,
-        "subject": subject,       # Matches email.subject in HTML
-        "body": body,             # Matches email.body in HTML
-        "ai_reply": ai_reply,     # Matches email.ai_reply in HTML
-        "status": "replied"
-    }).execute()
-
 # --- ROUTES ---
 
 @app.route('/')
 def index():
-    """Main Dashboard: Fetches and displays the feed."""
+    """Landing Page: The registration/connect form."""
+    # We show index.html but with no emails yet because they haven't "entered" the app
+    return render_template('index.html', emails=[])
+
+@app.route('/dashboard')
+def dashboard():
+    """Home Page: This is where users land after connecting."""
     try:
-        # Fetching all logs from the 'activity_logs' table
+        # Fetching all logs from the 'activity_logs' table to show the feed
         response = supabase.table("activity_logs").select("*").order("created_at", desc=True).execute()
         return render_template('index.html', emails=response.data)
     except Exception as e:
@@ -48,7 +40,7 @@ def index():
 
 @app.route('/pending-actions')
 def pending_actions():
-    """Calculates progress and shows pending tasks."""
+    """Activity Page: Shows the progress of AI processing."""
     try:
         response = supabase.table("activity_logs").select("*").execute()
         all_logs = response.data
@@ -70,7 +62,13 @@ def pending_actions():
         print(f"Pending Actions Error: {e}")
         return "Database Connection Error. Check Render Logs."
 
-# Serve other pages if you add them later (settings.html, etc.)
+@app.route('/settings')
+def settings():
+    """Settings Page: Placeholder for user preferences."""
+    # You can create a settings.html later. For now, we'll use a simple message.
+    return "<h1>Settings Page</h1><p>User preferences and API configurations coming soon.</p><a href='/dashboard'>Back to Dashboard</a>"
+
+# Serve other static files
 @app.route('/<path:filename>')
 def other_pages(filename):
     if filename.endswith('.html'):
