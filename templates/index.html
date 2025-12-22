@@ -25,6 +25,33 @@
             -webkit-font-smoothing: antialiased;
         }
 
+        /* --- NEW FEATURE: NAVIGATION BAR --- */
+        nav {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px); /* Apple glass effect */
+            border-bottom: 1px solid #d2d2d7;
+            padding: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav a {
+            text-decoration: none;
+            color: var(--apple-text);
+            font-size: 14px;
+            font-weight: 400;
+            transition: color 0.2s;
+        }
+
+        nav a:hover {
+            color: var(--apple-blue);
+        }
+
         .container {
             width: 90%;
             max-width: 800px;
@@ -146,6 +173,13 @@
 </head>
 <body>
 
+    <nav>
+        <a href="/">Connect</a>
+        <a href="/dashboard">Inbox</a>
+        <a href="/pending-actions">Activity</a>
+        <a href="/settings">Settings</a>
+    </nav>
+
     <div class="container">
         <header class="brand-header">
             <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" 
@@ -197,9 +231,7 @@
     </div>
 
     <script>
-        // 1. SUPABASE CONFIGURATION
         const supabaseUrl = 'https://rlmbiftjqfwjfiplycud.supabase.co';
-        // FIXED: Quotes added correctly below
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbWJpZnRqcWZ3amZpcGx5Y3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTc1ODMsImV4cCI6MjA4MTQzMzU4M30.TA5-ap09RMpil1yEaPtW5M3j-UG5-IZmgzjYrRzaBjI'; 
         
         const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -229,7 +261,8 @@
                     btn.innerText = 'Connect Inbox';
                 } else {
                     alert('Successfully connected to ERNESCO!');
-                    window.location.reload(); 
+                    // REDIRECT FEATURE: Send user to the dashboard route
+                    window.location.href = '/dashboard'; 
                 }
             } catch (err) {
                 console.error(err);
@@ -241,8 +274,11 @@
     </script>
 </body>
 </html>
-
         
+
+       
+
+           
            
        
            
