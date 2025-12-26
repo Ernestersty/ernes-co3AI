@@ -4,31 +4,141 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERNESCO | AI Email Intelligence</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        :root { --apple-blue: #0071e3; --apple-text: #1d1d1f; --apple-gray: #86868b; --apple-bg: #f5f5f7; }
-        body { font-family: -apple-system, sans-serif; background: #fff; color: var(--apple-text); margin: 0; display: flex; flex-direction: column; align-items: center; }
+        /* Apple-Inspired Minimalist Palette */
+        :root { 
+            --apple-blue: #0071e3; 
+            --apple-text: #1d1d1f; 
+            --apple-gray: #86868b; 
+            --apple-bg: #f5f5f7; 
+            --white: #ffffff;
+        }
+
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
+            background: var(--apple-bg); 
+            color: var(--apple-text); 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Nav Bar Glassmorphism */
+        nav { 
+            width: 100%; 
+            background: rgba(255, 255, 255, 0.72); 
+            backdrop-filter: saturate(180%) blur(20px); 
+            border-bottom: 1px solid rgba(0,0,0,0.1); 
+            padding: 16px 0; 
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+        }
+
+        nav a { 
+            text-decoration: none; 
+            color: var(--apple-text); 
+            font-size: 13px; 
+            font-weight: 400; 
+            letter-spacing: -0.01em;
+            opacity: 0.8;
+            transition: opacity 0.2s;
+        }
+
+        nav a:hover { opacity: 1; }
+
+        .container { 
+            width: 90%; 
+            max-width: 600px; 
+            margin: 60px auto; 
+            text-align: center; 
+        }
+
+        .brand-logo { 
+            width: 72px; 
+            height: 72px; 
+            border-radius: 18px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
+        .subtitle { color: var(--apple-gray); font-size: 19px; margin-top: 10px; margin-bottom: 40px; }
+
+        /* The Hero Login Card */
+        .card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        /* The "Continue with Google" Button */
+        .google-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: #fff;
+            color: #1d1d1f;
+            border: 1px solid #d2d2d7;
+            padding: 16px 32px;
+            border-radius: 14px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 17px;
+            transition: transform 0.2s, background 0.2s;
+        }
+
+        .google-btn:hover {
+            background: #fafafa;
+            transform: scale(1.02);
+            border-color: #86868b;
+        }
+
+        .google-btn img { width: 22px; height: 22px; }
+
+        /* AI Activity Feed */
+        .activity-hub { margin-top: 50px; text-align: left; }
+        .email-card { 
+            background: var(--white); 
+            border-radius: 20px; 
+            padding: 24px; 
+            margin-bottom: 16px; 
+            border: 1px solid rgba(0,0,0,0.05);
+        }
         
-        nav { width: 100%; background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(15px); border-bottom: 1px solid #d2d2d7; padding: 15px 0; display: flex; justify-content: center; gap: 40px; position: sticky; top: 0; z-index: 1000; }
-        nav a { text-decoration: none; color: var(--apple-text); font-size: 14px; font-weight: 500; }
+        .ai-draft-tag { 
+            background: #eef6ff; 
+            color: var(--apple-blue); 
+            padding: 4px 10px; 
+            border-radius: 6px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            text-transform: uppercase;
+        }
 
-        .container { width: 90%; max-width: 800px; margin: 40px auto; }
-        .brand-header { text-align: center; margin-bottom: 40px; }
-        .brand-logo { width: 80px; filter: drop-shadow(0 8px 12px rgba(0,0,0,0.1)); }
-
-        .setup-section { max-width: 420px; margin: 0 auto; text-align: center; }
+        /* Success Pulse Indicator */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #eafbea;
+            color: #1a7d1a;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 600;
+        }
         
-        /* --- NEW: INSTRUCTION BOX --- */
-        #guideBox { display: none; background: #fdf2f2; border: 1px solid #fababa; padding: 20px; border-radius: 14px; margin-bottom: 25px; text-align: left; animation: fadeIn 0.4s; }
-        .guide-link { color: var(--apple-blue); text-decoration: none; font-weight: 600; display: block; margin-top: 8px; }
-
-        input { width: 100%; padding: 16px; margin-bottom: 12px; border: 1px solid #d2d2d7; border-radius: 12px; font-size: 16px; background: var(--apple-bg); box-sizing: border-box; }
-        .submit-btn { width: 100%; background: var(--apple-blue); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 17px; font-weight: 600; cursor: pointer; }
-        
-        .email-card { background: #fff; border: 1px solid #d2d2d7; border-radius: 20px; padding: 24px; margin-bottom: 20px; }
-        .ai-reply-box { background: var(--apple-bg); border-radius: 14px; padding: 18px; margin-top: 15px; border-left: 4px solid var(--apple-blue); }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .dot { width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -37,93 +147,44 @@
         <a href="/">Connect</a>
         <a href="/dashboard">Inbox</a>
         <a href="/pending-actions">Activity</a>
-        <a href="/settings">Settings</a>
     </nav>
 
     <div class="container">
-        <header class="brand-header">
-            <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" class="brand-logo">
-            <h1 style="font-size: 32px; letter-spacing: -1px;">ERNESCO</h1>
-        </header>
+        <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" class="brand-logo" alt="Logo">
+        <h1>ERNESCO</h1>
+        <p class="subtitle">AI Intelligence for your Workspace.</p>
 
-        <section id="setupSection" class="setup-section">
-            <div id="guideBox">
-                <strong style="color: #c53030;">⚠️ Connection Failed</strong>
-                <p style="font-size: 14px; margin: 8px 0;">To allow ERNESCO access, please follow these two steps:</p>
-                <a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" class="guide-link">1. Enable IMAP in Gmail Settings →</a>
-                <a href="https://myaccount.google.com/apppasswords" target="_blank" class="guide-link">2. Create a 16-digit App Password →</a>
-            </div>
+        <div class="card">
+            {% if not logged_in %}
+                <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow ERNESCO to manage your drafts.</p>
+                <a href="/login" class="google-btn">
+                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
+                    <span>Continue with Google</span>
+                </a>
+            {% else %}
+                <div class="status-badge">
+                    <span class="dot"></span>
+                    ERNESCO is Connected
+                </div>
+                <p style="margin-top: 15px;"><a href="/logout" style="color: var(--apple-gray); font-size: 13px;">Disconnect Account</a></p>
+            {% endif %}
+        </div>
 
-            <form id="setupForm">
-                <input type="email" id="email" placeholder="Gmail Address" required>
-                <input type="password" id="app_password" placeholder="App Password (16 characters)" required>
-                <input type="text" id="location" placeholder="Office Location">
-                <button type="submit" id="submitBtn" class="submit-btn">Connect & Verify Inbox</button>
-            </form>
-            <p style="font-size: 12px; color: var(--apple-gray); margin-top: 15px;">We use encrypted IMAP/SMTP to read and draft replies.</p>
-        </section>
-
-        <section class="activity-hub">
+        {% if emails %}
+        <div class="activity-hub">
+            <h3 style="font-size: 15px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em;">Recent AI Intelligence</h3>
             {% for email in emails %}
             <div class="email-card">
-                <h4>{{ email.subject }}</h4>
-                <p style="color: #424245;">{{ email.body }}</p>
-                <div class="ai-reply-box">
-                    <span style="color: var(--apple-blue); font-weight: 700; font-size: 12px;">✨ AI DRAFT</span>
-                    <p>{{ email.ai_reply }}</p>
+                <div style="display:flex; justify-content: space-between; align-items: center;">
+                    <h4 style="margin: 0; font-size: 17px;">{{ email.subject }}</h4>
+                    <span class="ai-draft-tag">AI Draft</span>
                 </div>
+                <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
             </div>
             {% endfor %}
-        </section>
+        </div>
+        {% endif %}
     </div>
 
-    <script>
-        const supabaseUrl = 'https://rlmbiftjqfwjfiplycud.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbWJpZnRqcWZ3amZpcGx5Y3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTc1ODMsImV4cCI6MjA4MTQzMzU4M30.TA5-ap09RMpil1yEaPtW5M3j-UG5-IZmgzjYrRzaBjI';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-        const form = document.getElementById('setupForm');
-        const btn = document.getElementById('submitBtn');
-        const guide = document.getElementById('guideBox');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btn.disabled = true;
-            btn.innerText = 'Verifying with Google...';
-            guide.style.display = 'none';
-
-            const email = document.getElementById('email').value;
-            const app_password = document.getElementById('app_password').value;
-
-            try {
-                // 1. CALL BACKEND TO VERIFY IMAP
-                const response = await fetch('/verify-connection', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, app_password })
-                });
-
-                if (response.ok) {
-                    // 2. IF SUCCESS, SAVE TO SUPABASE
-                    await supabaseClient.from('profiles').insert([{
-                        email: email,
-                        location: document.getElementById('location').value,
-                        is_active: true
-                    }]);
-                    
-                    alert('Success! ERNESCO is now linked to ' + email);
-                    window.location.href = '/dashboard';
-                } else {
-                    // 3. IF FAIL, SHOW GUIDE
-                    guide.style.display = 'block';
-                    btn.disabled = false;
-                    btn.innerText = 'Try Again';
-                }
-            } catch (err) {
-                alert('Server Error. Check Render logs.');
-                btn.disabled = false;
-            }
-        });
-    </script>
 </body>
 </html>
