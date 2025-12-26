@@ -1,111 +1,126 @@
 import os
-from flask import Flask, render_template, redirect, url_for, session, request, jsonify
+from flask import Flask, render_template, redirect, url_for, session, request
 from dotenv import load_dotenv
 from supabase import create_client
-import google_auth_oauthlib.flow
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build
+from apscheduler.schedulers.background import BackgroundScheduler
 import openai
 
-# 1. Load Environment Variables from your .env
 load_dotenv()
 
 app = Flask(__name__)
-# Flask needs this key to handle the 'Continue with Google' session
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
-# --- CONFIGURATION ---
-OPENAI_KEY = os.getenv("OPENAI_API_KEY")
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# --- CLIENTS ---
+openai.api_key = os.getenv("OPENAI_API_KEY")
+supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-openai.api_key = OPENAI_KEY
-supabase = create_client(SUPABASE_URL, SUPABASE_KEY)
-
-# Google OAuth Config
-CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
-CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
-# This must match your Google Cloud Console exactly
-REDIRECT_URI = os.getenv("REDIRECT_URI")
-
+# Google Configuration
+SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
 CLIENT_CONFIG = {
     "web": {
-        "client_id": CLIENT_ID,
-        "client_secret": CLIENT_SECRET,
+        "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+        "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"),
         "auth_uri": "https://accounts.google.com/o/oauth2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
     }
 }
 
-# The permission ERNESCO needs: Reading and Drafting emails
-SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+# --- BACKGROUND TASK: THE AI BRAIN ---
+
+def scan_inboxes_and_reply():
+    """Wakes up every 10 mins, finds users, and drafts AI replies."""
+    print("🤖 ERNESCO AI: Scanning inboxes...")
+    
+    # 1. Get all users who have connected their Google Account
+    users = supabase.table("profiles").select("*").execute()
+    
+    for user in users.data:
+        try:
+            # 2. Reconstruct Google Credentials from Supabase
+            creds = Credentials(
+                token=user.get('access_token'),
+                refresh_token=user.get('refresh_token'),
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=os.getenv("GOOGLE_CLIENT_ID"),
+                client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
+            )
+            
+            # 3. Connect to Gmail
+            service = build('gmail', 'v1', credentials=creds)
+            results = service.users().messages().list(userId='me', q="is:unread").execute()
+            messages = results.get('messages', [])
+
+            for msg in messages:
+                # 4. Get Email Content
+                txt = service.users().messages().get(userId='me', id=msg['id']).execute()
+                snippet = txt.get('snippet')
+
+                # 5. Ask OpenAI for a Professional Reply
+                ai_response = openai.chat.completions.create(
+                    model="gpt-4o",
+                    messages=[{"role": "system", "content": "You are ERNESCO, a professional executive assistant. Draft a polite reply to this email."},
+                              {"role": "user", "content": snippet}]
+                )
+                reply_text = ai_response.choices[0].message.content
+
+                # 6. Save Draft in Gmail
+                service.users().drafts().create(userId='me', body={
+                    'message': {
+                        'threadId': msg['threadId'],
+                        'raw': "" # You'd encode the reply_text here
+                    }
+                }).execute()
+                
+                # 7. Log Activity to Supabase
+                supabase.table("activity_logs").insert({
+                    "user_id": user['id'],
+                    "subject": "New Email Replied",
+                    "status": "drafted"
+                }).execute()
+
+        except Exception as e:
+            print(f"Error processing user {user['id']}: {e}")
+
+# Start the background scheduler
+scheduler = BackgroundScheduler()
+scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", minutes=10)
+scheduler.start()
 
 # --- ROUTES ---
 
 @app.route('/')
 def index():
-    """Landing Page: Now checks if user is logged in."""
     is_logged_in = 'credentials' in session
-    return render_template('index.html', emails=[], logged_in=is_logged_in)
+    return render_template('index.html', logged_in=is_logged_in)
 
 @app.route('/login')
 def login():
-    """Starts the Google OAuth process."""
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(
-        CLIENT_CONFIG, scopes=SCOPES)
-    flow.redirect_uri = REDIRECT_URI
-    
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true',
-        prompt='consent' # Forces Google to provide a Refresh Token
-    )
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
+    flow.redirect_uri = os.getenv("REDIRECT_URI")
+    auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
     session['state'] = state
-    return redirect(authorization_url)
+    return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
-    """Google sends the user here after they click 'Allow'."""
-    flow = google_auth_oauthlib.flow.Flow.from_client_config(
-        CLIENT_CONFIG, scopes=SCOPES, state=session['state'])
-    flow.redirect_uri = REDIRECT_URI
-
-    # Exchange the code from the URL for real tokens
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session['state'])
+    flow.redirect_uri = os.getenv("REDIRECT_URI")
     flow.fetch_token(authorization_response=request.url)
-    creds = flow.credentials
-
-    # SAVE TO SUPABASE: Store the tokens so the AI can work later
-    # Note: In a real app, you'd fetch the user's email here too
-    token_data = {
-        "access_token": creds.token,
-        "refresh_token": creds.refresh_token,
-        "token_uri": creds.token_uri,
-        "client_id": creds.client_id,
-        "client_secret": creds.client_secret,
-    }
     
-    # Save the 'Digital Key' to your profiles table
-    supabase.table("profiles").upsert(token_data).execute()
-
-    return redirect(url_for('dashboard'))
-
-@app.route('/dashboard')
-def dashboard():
-    """Displays the AI activity feed from Supabase."""
-    try:
-        response = supabase.table("activity_logs").select("*").order("created_at", desc=True).execute()
-        return render_template('index.html', emails=response.data, logged_in=True)
-    except Exception as e:
-        print(f"Error fetching logs: {e}")
-        return render_template('index.html', emails=[], logged_in=True)
-
-@app.route('/logout')
-def logout():
-    session.clear()
+    creds = flow.credentials
+    # Save tokens to Supabase for the background worker
+    supabase.table("profiles").upsert({
+        "email": "fetch_from_google_api", 
+        "access_token": creds.token,
+        "refresh_token": creds.refresh_token
+    }).execute()
+    
+    session['credentials'] = creds.to_json()
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    # Allow local HTTP for testing; Render handles HTTPS automatically
-    if os.getenv("REDIRECT_URI") and "127.0.0.1" in os.getenv("REDIRECT_URI"):
-        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
         
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
