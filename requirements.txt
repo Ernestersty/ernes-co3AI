@@ -1,13 +1,21 @@
+# --- Web & Framework ---
 Flask==3.1.2
 Flask-SQLAlchemy==3.1.1
+gunicorn==23.0.0
 python-dotenv==1.2.1
+
+# --- Google OAuth (New for Ernesco) ---
+google-auth-oauthlib==1.2.3
+google-api-python-client==2.187.0
+
+# --- Database & AI ---
+supabase==2.27.0
 openai==2.13.0
+
+# --- Utilities & Background Tasks ---
 schedule==1.2.2
 langdetect==1.0.9
 textblob==0.19.0
 gTTS==2.5.4
 python-telegram-bot==20.8
-gunicorn==23.0.0
-supabase==2.27.0
-
 
