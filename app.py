@@ -88,19 +88,16 @@ def scan_inboxes_and_reply():
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", minutes=10)
 
-# Start scheduler safely on first request to avoid starting at import time (e.g. during gunicorn worker import).
-@app.before_first_request
-def start_scheduler():
-    try:
-        if not getattr(scheduler, 'running', False):
-            scheduler.start()
-            print("Scheduler started.")
-    except Exception as e:
-        print(f"Failed to start scheduler: {e}")
 
-# --- ROUTES ---
-# (existing routes continue below)
-
-
-
-
+# --- Privacy Route ---
+@app.route('/privacy')
+def privacy():
+    return """
+    <h1>Privacy Policy for ERNESCO</h1>
+    <p>Last Updated: December 2025</p>
+    <p>ERNESCO uses the <b>gmail.modify</b> scope to help you manage your inbox. 
+    We only access your emails to generate AI drafts using OpenAI. 
+    <b>We do not store your email content</b> on our servers, and we never sell your data.</p>
+    <p>You can revoke access at any time via your Google Account settings.</p>
+    <a href="/">Back to Home</a>
+    """
