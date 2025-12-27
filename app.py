@@ -69,7 +69,7 @@ def scan_inboxes_and_reply():
                 # 6. Save Draft in Gmail
                 service.users().drafts().create(userId='me', body={
                     'message': {
-                        'threadId': msg['threadId'],
+                        'threadId': msg.get('threadId'),
                         'raw': "" # You'd encode the reply_text here
                     }
                 }).execute()
@@ -96,6 +96,47 @@ def index():
     return render_template('index.html')
 
 
+# --- OAuth callback ---
+@app.route('/callback')
+def callback():
+    # Exchange the Google auth code for credentials and store in session
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, redirect_uri=os.getenv('REDIRECT_URI'))
+    # This will read the full redirect URL including ?code=...
+    flow.fetch_token(authorization_response=request.url)
+    creds = flow.credentials
+
+    session['credentials'] = {
+        'token': creds.token,
+        'refresh_token': creds.refresh_token,
+        'token_uri': creds.token_uri,
+        'client_id': creds.client_id,
+        'client_secret': creds.client_secret,
+        'scopes': creds.scopes
+    }
+
+    # Optionally persist to Supabase (uncomment to enable)
+    # try:
+    #     supabase.table('profiles').upsert({
+    #         'id': session.get('user_id'),
+    #         'access_token': creds.token,
+    #         'refresh_token': creds.refresh_token
+    #     }).execute()
+    # except Exception as e:
+    #     print('Error saving credentials to Supabase:', e)
+
+    return redirect(url_for('dashboard'))
+
+
+# --- Dashboard / success page ---
+@app.route('/dashboard')
+def dashboard():
+    if 'credentials' not in session:
+        return redirect(url_for('index'))
+
+    # Render your index (or dashboard) template and mark user as logged in
+    return render_template('index.html', logged_in=True)
+
+
 # --- Privacy Route ---
 @app.route('/privacy')
 def privacy():
@@ -106,7 +147,7 @@ def privacy():
     We only access your emails to generate AI drafts using OpenAI. 
     <b>We do not store your email content</b> on our servers, and we never sell your data.</p>
     <p>You can revoke access at any time via your Google Account settings.</p>
-    <a href="/">Back to Home</a>
+    <a href=\"/\">Back to Home</a>
     """
 
 
