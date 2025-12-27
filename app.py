@@ -82,45 +82,25 @@ def scan_inboxes_and_reply():
                 }).execute()
 
         except Exception as e:
-            print(f"Error processing user {user['id']}: {e}")
+            print(f"Error processing user {user.get('id')}: {e}")
 
-# Start the background scheduler
+# Prepare the scheduler and job, but do NOT start it at import time.
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", minutes=10)
-scheduler.start()
+
+# Start scheduler safely on first request to avoid starting at import time (e.g. during gunicorn worker import).
+@app.before_first_request
+def start_scheduler():
+    try:
+        if not getattr(scheduler, 'running', False):
+            scheduler.start()
+            print("Scheduler started.")
+    except Exception as e:
+        print(f"Failed to start scheduler: {e}")
 
 # --- ROUTES ---
+# (existing routes continue below)
 
-@app.route('/')
-def index():
-    is_logged_in = 'credentials' in session
-    return render_template('index.html', logged_in=is_logged_in)
 
-@app.route('/login')
-def login():
-    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
-    flow.redirect_uri = os.getenv("REDIRECT_URI")
-    auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
-    session['state'] = state
-    return redirect(auth_url)
 
-@app.route('/callback')
-def callback():
-    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session['state'])
-    flow.redirect_uri = os.getenv("REDIRECT_URI")
-    flow.fetch_token(authorization_response=request.url)
-    
-    creds = flow.credentials
-    # Save tokens to Supabase for the background worker
-    supabase.table("profiles").upsert({
-        "email": "fetch_from_google_api", 
-        "access_token": creds.token,
-        "refresh_token": creds.refresh_token
-    }).execute()
-    
-    session['credentials'] = creds.to_json()
-    return redirect(url_for('index'))
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
-        
