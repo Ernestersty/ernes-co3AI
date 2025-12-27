@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="google-site-verification" content="m7vJUIq3_QrXfXUz26G1if28bAvQR1zREP5NjNK-uqQ" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERNESCO | AI Email Intelligence</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -32,98 +33,3 @@
     </style>
 </head>
 <body>
-
-    <nav>
-        <a href="/">Connect</a>
-        <a href="/dashboard">Inbox</a>
-        <a href="/pending-actions">Activity</a>
-        <a href="/settings">Settings</a>
-    </nav>
-
-    <div class="container">
-        <header class="brand-header">
-            <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" class="brand-logo">
-            <h1 style="font-size: 32px; letter-spacing: -1px;">ERNESCO</h1>
-        </header>
-
-        <section id="setupSection" class="setup-section">
-            <div id="guideBox">
-                <strong style="color: #c53030;">⚠️ Connection Failed</strong>
-                <p style="font-size: 14px; margin: 8px 0;">To allow ERNESCO access, please follow these two steps:</p>
-                <a href="https://mail.google.com/mail/u/0/#settings/fwdandpop" target="_blank" class="guide-link">1. Enable IMAP in Gmail Settings →</a>
-                <a href="https://myaccount.google.com/apppasswords" target="_blank" class="guide-link">2. Create a 16-digit App Password →</a>
-            </div>
-
-            <form id="setupForm">
-                <input type="email" id="email" placeholder="Gmail Address" required>
-                <input type="password" id="app_password" placeholder="App Password (16 characters)" required>
-                <input type="text" id="location" placeholder="Office Location">
-                <button type="submit" id="submitBtn" class="submit-btn">Connect & Verify Inbox</button>
-            </form>
-            <p style="font-size: 12px; color: var(--apple-gray); margin-top: 15px;">We use encrypted IMAP/SMTP to read and draft replies.</p>
-        </section>
-
-        <section class="activity-hub">
-            {% for email in emails %}
-            <div class="email-card">
-                <h4>{{ email.subject }}</h4>
-                <p style="color: #424245;">{{ email.body }}</p>
-                <div class="ai-reply-box">
-                    <span style="color: var(--apple-blue); font-weight: 700; font-size: 12px;">✨ AI DRAFT</span>
-                    <p>{{ email.ai_reply }}</p>
-                </div>
-            </div>
-            {% endfor %}
-        </section>
-    </div>
-
-    <script>
-        const supabaseUrl = 'https://rlmbiftjqfwjfiplycud.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJsbWJpZnRqcWZ3amZpcGx5Y3VkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4NTc1ODMsImV4cCI6MjA4MTQzMzU4M30.TA5-ap09RMpil1yEaPtW5M3j-UG5-IZmgzjYrRzaBjI';
-        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
-
-        const form = document.getElementById('setupForm');
-        const btn = document.getElementById('submitBtn');
-        const guide = document.getElementById('guideBox');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            btn.disabled = true;
-            btn.innerText = 'Verifying with Google...';
-            guide.style.display = 'none';
-
-            const email = document.getElementById('email').value;
-            const app_password = document.getElementById('app_password').value;
-
-            try {
-                // 1. CALL BACKEND TO VERIFY IMAP
-                const response = await fetch('/verify-connection', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, app_password })
-                });
-
-                if (response.ok) {
-                    // 2. IF SUCCESS, SAVE TO SUPABASE
-                    await supabaseClient.from('profiles').insert([{
-                        email: email,
-                        location: document.getElementById('location').value,
-                        is_active: true
-                    }]);
-                    
-                    alert('Success! ERNESCO is now linked to ' + email);
-                    window.location.href = '/dashboard';
-                } else {
-                    // 3. IF FAIL, SHOW GUIDE
-                    guide.style.display = 'block';
-                    btn.disabled = false;
-                    btn.innerText = 'Try Again';
-                }
-            } catch (err) {
-                alert('Server Error. Check Render logs.');
-                btn.disabled = false;
-            }
-        });
-    </script>
-</body>
-</html>
