@@ -89,6 +89,13 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", minutes=10)
 
 
+# --- Home route ---
+@app.route('/')
+def index():
+    # Renders templates/index.html (Flask looks in the templates/ folder)
+    return render_template('index.html')
+
+
 # --- Privacy Route ---
 @app.route('/privacy')
 def privacy():
@@ -101,3 +108,10 @@ def privacy():
     <p>You can revoke access at any time via your Google Account settings.</p>
     <a href="/">Back to Home</a>
     """
+
+
+# --- Start scheduler & run app ---
+if __name__ == '__main__':
+    # start the background job when running this file directly
+    scheduler.start()
+    app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)), debug=os.getenv('FLASK_DEBUG', 'False') == 'True')
