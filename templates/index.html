@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ERNESCO | AI Email Intelligence</title>
     <style>
-        /* Apple-Inspired Minimalist Palette */
         :root { 
             --apple-blue: #0071e3; 
             --apple-text: #1d1d1f; 
@@ -25,7 +24,6 @@
             -webkit-font-smoothing: antialiased;
         }
 
-        /* Nav Bar Glassmorphism */
         nav { 
             width: 100%; 
             background: rgba(255, 255, 255, 0.72); 
@@ -40,113 +38,37 @@
             z-index: 1000; 
         }
 
-        nav a { 
-            text-decoration: none; 
-            color: var(--apple-text); 
-            font-size: 13px; 
-            font-weight: 400; 
-            letter-spacing: -0.01em;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-
+        nav a { text-decoration: none; color: var(--apple-text); font-size: 13px; opacity: 0.8; transition: opacity 0.2s; }
         nav a:hover { opacity: 1; }
 
-        .container { 
-            width: 90%; 
-            max-width: 600px; 
-            margin: 60px auto; 
-            text-align: center; 
-        }
-
-        .brand-logo { 
-            width: 72px; 
-            height: 72px; 
-            border-radius: 18px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
-
+        .container { width: 90%; max-width: 600px; margin: 60px auto; text-align: center; }
+        .brand-logo { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
         .subtitle { color: var(--apple-gray); font-size: 19px; margin-top: 10px; margin-bottom: 40px; }
+        .card { background: var(--white); border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
 
-        /* The Hero Login Card */
-        .card {
-            background: var(--white);
-            border-radius: 24px;
-            padding: 40px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.04);
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        /* The "Continue with Google" Button */
-        .google-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            background: #fff;
-            color: #1d1d1f;
-            border: 1px solid #d2d2d7;
-            padding: 16px 32px;
-            border-radius: 14px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 17px;
-            transition: transform 0.2s, background 0.2s;
-        }
-
-        .google-btn:hover {
-            background: #fafafa;
-            transform: scale(1.02);
-            border-color: #86868b;
-        }
-
+        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; background: #fff; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 17px; transition: transform 0.2s; }
+        .google-btn:hover { transform: scale(1.02); border-color: #86868b; }
         .google-btn img { width: 22px; height: 22px; }
 
-        /* AI Activity Feed */
         .activity-hub { margin-top: 50px; text-align: left; }
-        .email-card { 
-            background: var(--white); 
-            border-radius: 20px; 
-            padding: 24px; 
-            margin-bottom: 16px; 
-            border: 1px solid rgba(0,0,0,0.05);
-        }
-        
-        .ai-draft-tag { 
-            background: #eef6ff; 
-            color: var(--apple-blue); 
-            padding: 4px 10px; 
-            border-radius: 6px; 
-            font-size: 11px; 
-            font-weight: 700; 
-            text-transform: uppercase;
-        }
+        .email-card { background: var(--white); border-radius: 20px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
+        .ai-draft-tag { background: #eef6ff; color: var(--apple-blue); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
         /* Success Pulse Indicator */
-        .status-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: #eafbea;
-            color: #1a7d1a;
-            padding: 8px 16px;
-            border-radius: 100px;
-            font-size: 14px;
-            font-weight: 600;
-        }
-        
+        .status-badge { display: inline-flex; align-items: center; gap: 8px; background: #eafbea; color: #1a7d1a; padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 600; }
         .dot { width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        .listen-btn { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <nav>
         <a href="/">Connect</a>
-        <a href="/dashboard">Inbox</a>
-        <a href="/pending-actions">Activity</a>
+        <a href="#">Inbox</a>
+        <a href="#">Activity</a>
     </nav>
 
     <div class="container">
@@ -164,7 +86,7 @@
             {% else %}
                 <div class="status-badge">
                     <span class="dot"></span>
-                    ERNESCO is Connected
+                    ERNESCO is Connected & Scanning
                 </div>
                 <p style="margin-top: 15px;"><a href="/logout" style="color: var(--apple-gray); font-size: 13px;">Disconnect Account</a></p>
             {% endif %}
@@ -172,14 +94,15 @@
 
         {% if emails %}
         <div class="activity-hub">
-            <h3 style="font-size: 15px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em;">Recent AI Intelligence</h3>
+            <h3 style="font-size: 13px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em; margin-bottom: 20px;">Recent AI Intelligence</h3>
             {% for email in emails %}
             <div class="email-card">
                 <div style="display:flex; justify-content: space-between; align-items: center;">
                     <h4 style="margin: 0; font-size: 17px;">{{ email.subject }}</h4>
-                    <span class="ai-draft-tag">AI Draft</span>
+                    <span class="ai-draft-tag">{{ email.status }}</span>
                 </div>
                 <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
+                <a href="/listen/{{ email.id }}" target="_blank" class="listen-btn">🔊 Listen to AI Voice</a>
             </div>
             {% endfor %}
         </div>
