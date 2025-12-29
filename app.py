@@ -3,6 +3,7 @@ from flask import Flask, render_template, redirect, url_for, session, request
 from dotenv import load_dotenv
 from supabase import create_client
 from google_auth_oauthlib.flow import Flow
+from googleapiclient.discovery import build # Added for email fetching
 
 load_dotenv()
 
@@ -12,7 +13,13 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 # Clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-SCOPES = ['https://www.googleapis.com/auth/gmail.modify']
+# Add 'userinfo.email' to scopes so we know who is logging in
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.modify',
+    'https://www.googleapis.com/auth/userinfo.email',
+    'openid'
+]
+
 CLIENT_CONFIG = {
     "web": {
         "client_id": os.getenv("GOOGLE_CLIENT_ID"),
@@ -22,14 +29,17 @@ CLIENT_CONFIG = {
     }
 }
 
+# HARD-CODED REDIRECT to stop the 127.0.0.1 error
+PROD_REDIRECT = "https://ernesco.onrender.com/callback"
+
 @app.route('/')
 def index():
-    # Fetch logs from Supabase to show on the dashboard if logged in
     emails = []
     logged_in = session.get('logged_in', False)
     
     if logged_in:
         try:
+            # Shows recent AI activity from Supabase
             response = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(5).execute()
             emails = response.data
         except Exception as e:
@@ -40,7 +50,8 @@ def index():
 @app.route('/login')
 def login():
     flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
-    flow.redirect_uri = os.getenv("REDIRECT_URI")
+    flow.redirect_uri = PROD_REDIRECT
+    # 'offline' access_type ensures we get a Refresh Token
     authorization_url, state = flow.authorization_url(access_type='offline', prompt='consent')
     session['state'] = state
     return redirect(authorization_url)
@@ -48,19 +59,38 @@ def login():
 @app.route('/callback')
 def callback():
     flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session.get('state'))
-    flow.redirect_uri = os.getenv("REDIRECT_URI")
+    flow.redirect_uri = PROD_REDIRECT
     
-    # FIX: Ensure the callback URL uses HTTPS (Render requirement)
-    auth_url = request.url.replace('http:', 'https:') if 'render.com' in request.url else request.url
+    # Fix Render's HTTP proxy issue
+    auth_url = request.url.replace('http:', 'https:')
     flow.fetch_token(authorization_response=auth_url)
     
     creds = flow.credentials
-    session['logged_in'] = True
     
-    # Save tokens to Supabase here
-    # supabase.table("profiles").upsert({...}).execute()
+    # 1. Fetch user email using Google API
+    try:
+        service = build('oauth2', 'v2', credentials=creds)
+        user_info = service.userinfo().get().execute()
+        user_email = user_info.get('email')
+        
+        # 2. Save tokens to Supabase 'profiles' table
+        supabase.table("profiles").upsert({
+            "email": user_email,
+            "access_token": creds.token,
+            "refresh_token": creds.refresh_token,
+            "token_uri": creds.token_uri,
+            "client_id": creds.client_id,
+            "client_secret": creds.client_secret
+        }, on_conflict="email").execute()
+        
+        print(f"✅ Saved tokens for {user_email}")
+        session['user_email'] = user_email
+        
+    except Exception as e:
+        print(f"❌ Error during callback storage: {e}")
 
-    return redirect(url_for('index')) # Redirecting back to home avoids the 404
+    session['logged_in'] = True
+    return redirect(url_for('index'))
 
 @app.route('/logout')
 def logout():
@@ -69,5 +99,3 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
-
-
