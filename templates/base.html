@@ -22,37 +22,125 @@
             color: var(--text-main); 
             margin: 0; 
             text-align: inherit;
+            -webkit-font-smoothing: antialiased;
         }
 
+        /* Apple Style Glass Navbar */
         nav { 
             width: 100%; 
-            background: rgba(26, 26, 28, 0.8); 
-            backdrop-filter: blur(20px); 
+            background: rgba(26, 26, 28, 0.75); 
+            backdrop-filter: saturate(180%) blur(20px); 
             border-bottom: 1px solid var(--border-color); 
-            padding: 16px 0; 
-            display: flex; 
-            justify-content: center; 
-            gap: 30px; 
-            position: sticky; top: 0; z-index: 1000; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
+            height: 52px;
+            display: flex;
+            align-items: center;
         }
 
-        nav a { text-decoration: none; color: var(--text-dim); font-size: 13px; font-weight: 500; transition: 0.2s; }
-        nav a:hover { color: var(--text-main); }
+        .nav-container {
+            width: 90%;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        /* Nav Links - Center Area */
+        .nav-links {
+            display: flex;
+            gap: 25px;
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .nav-links a { 
+            text-decoration: none; 
+            color: var(--text-dim); 
+            font-size: 12px; 
+            font-weight: 400; 
+            transition: color 0.3s; 
+        }
+
+        .nav-links a:hover { color: var(--text-main); }
         .force-scan-btn { color: var(--accent-orange) !important; font-weight: 700; }
 
+        /* Auth Button - Right Side */
+        .auth-area {
+            display: flex;
+            align-items: center;
+        }
+
+        .auth-btn {
+            text-decoration: none;
+            font-size: 12px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            transition: 0.3s;
+        }
+
+        .login-style {
+            background: var(--apple-blue);
+            color: white !important;
+        }
+
+        .logout-style {
+            color: var(--text-dim);
+            border: 1px solid var(--border-color);
+        }
+
+        .logout-style:hover {
+            border-color: #ff453a;
+            color: #ff453a !important;
+        }
+
+        /* Main Container */
         .container { width: 90%; max-width: 700px; margin: 40px auto; }
         .card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid var(--border-color); margin-bottom: 20px; }
         h1 { font-size: 34px; font-weight: 700; margin-bottom: 20px; }
+
+        /* RTL Handling */
+        [dir="rtl"] .nav-links {
+            flex-direction: row-reverse;
+        }
     </style>
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('index') }}">{{ t.dash }}</a>
-        <a href="{{ url_for('connect_email') }}">{{ t.conn }}</a>
-        <a href="{{ url_for('pending_actions') }}">{{ t.pend }}</a>
-        <a href="{{ url_for('settings') }}">{{ t.sett }}</a>
-        <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ {{ t.scan }}</a>
+        <div class="nav-container">
+            <a href="{{ url_for('index') }}" class="brand">ERNESCO</a>
+
+            {% if session.get('logged_in') %}
+            <div class="nav-links">
+                <a href="{{ url_for('index') }}">{{ t.dash }}</a>
+                <a href="{{ url_for('connect_email') }}">{{ t.conn }}</a>
+                <a href="{{ url_for('pending_actions') }}">{{ t.pend }}</a>
+                <a href="{{ url_for('settings') }}">{{ t.sett }}</a>
+                <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ {{ t.scan }}</a>
+            </div>
+            {% endif %}
+
+            <div class="auth-area">
+                {% if session.get('logged_in') %}
+                    <a href="{{ url_for('logout') }}" class="auth-btn logout-style">Sign Out</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="auth-btn login-style">Sign In</a>
+                {% endif %}
+            </div>
+        </div>
     </nav>
+
     <div class="container">
         {% block content %}{% endblock %}
     </div>
