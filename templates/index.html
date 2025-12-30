@@ -1,53 +1,104 @@
 {% extends "base.html" %}
-
-{% block title %}Dashboard | ERNESCO{% endblock %}
+{% block title %}Home | ERNESCO AI{% endblock %}
 
 {% block content %}
-<div style="text-align: center;">
-    <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" 
-         style="width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px;" alt="Logo">
-    <h1>ERNESCO</h1>
-    <p style="color: var(--apple-gray); font-size: 19px; margin-top: 10px; margin-bottom: 40px;">AI Intelligence with Google Gemini.</p>
+<div class="home-container">
 
-    <div class="card">
-        {% if not logged_in %}
-            <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow Gemini to manage your drafts.</p>
-            <a href="/login" class="google-btn" style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #fff; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 17px;">
-                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 22px; height: 22px;" alt="Google">
-                <span>Continue with Google</span>
-            </a>
-        {% else %}
-            <div style="display: inline-flex; align-items: center; gap: 8px; background: #eafbea; color: #1a7d1a; padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 600;">
-                <span style="width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite;"></span>
-                Gemini is Active & Scanning
+    {% if not logged_in %}
+    <div class="hero-section">
+        <div class="ai-badge">Gemini 1.5 Flash Integrated</div>
+        <h1 class="hero-title">Automate your inbox with <span class="glow-text">ERNESCO AI</span></h1>
+        <p class="hero-subtitle">The intelligent layer for your Gmail. ERNESCO reads, analyzes, and drafts professional replies in 15+ languages while you sleep.</p>
+        
+        <div class="hero-actions">
+            <a href="{{ url_for('login') }}" class="cta-button">Get Started for Free</a>
+            <a href="#features" class="secondary-button">How it works</a>
+        </div>
+    </div>
+
+    <div class="preview-card card">
+        <div class="preview-header">
+            <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
+            <span class="preview-label">Live Preview</span>
+        </div>
+        <div class="preview-body">
+            <p><strong>From:</strong> Potential Client</p>
+            <p><strong>Subject:</strong> Inquiry about services</p>
+            <div class="ai-typing">ERNESCO is drafting a reply in {{ t.dash }}...</div>
+        </div>
+    </div>
+
+    {% else %}
+    <div class="dashboard-header">
+        <h1>Welcome back, <span class="glow-text">User</span></h1>
+        <div class="status-indicator">
+            <span class="pulse-dot"></span> AI Scanner: Active
+        </div>
+    </div>
+
+    <div class="activity-feed">
+        <h3 class="section-title">Recent Activity</h3>
+        {% if emails %}
+            {% for email in emails %}
+            <div class="card email-card">
+                <div class="email-info">
+                    <span class="email-subj">{{ email.subject }}</span>
+                    <span class="email-status">{{ email.status }}</span>
+                </div>
+                <div class="email-preview">{{ email.ai_reply[:120] }}...</div>
+                <div class="card-actions">
+                    <a href="{{ url_for('listen', log_id=email.id) }}" class="listen-btn">🔊 Listen to AI Voice</a>
+                </div>
             </div>
-            <div style="margin-top: 20px;">
-                <a href="/download-report" style="font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 500; margin-right: 20px;">Download Full PDF Report</a>
-                <a href="/logout" style="color: var(--apple-gray); font-size: 13px; text-decoration: none;">Disconnect Account</a>
+            {% endfor %}
+        {% else %}
+            <div class="card empty-state">
+                <p>No activity yet. Gemini is waiting for your next email! 🤖</p>
             </div>
         {% endif %}
     </div>
-
-    {% if emails %}
-    <div style="margin-top: 50px; text-align: left;">
-        <h3 style="font-size: 13px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em; margin-bottom: 20px;">Recent AI Intelligence</h3>
-        {% for email in emails %}
-        <div class="card" style="padding: 24px; margin-bottom: 16px; text-align: left;">
-            <div style="display:flex; justify-content: space-between; align-items: center;">
-                <h4 style="margin: 0; font-size: 17px;">{{ email.subject }}</h4>
-                <span style="background: #eef6ff; color: var(--apple-blue); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">{{ email.status }}</span>
-            </div>
-            <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
-            <div style="margin-top: 10px;">
-                <a href="/listen/{{ email.id }}" target="_blank" style="font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600;">🔊 Listen to AI Voice</a>
-            </div>
-        </div>
-        {% endfor %}
-    </div>
     {% endif %}
+
 </div>
 
 <style>
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    .home-container { text-align: center; animation: fadeIn 0.8s ease; }
+    
+    /* Hero Section */
+    .hero-section { padding: 60px 0; }
+    .ai-badge { background: rgba(88, 166, 255, 0.1); color: var(--glow-blue); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 20px; border: 1px solid rgba(88, 166, 255, 0.3); }
+    .hero-title { font-size: 56px; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
+    .hero-subtitle { color: var(--text-dim); font-size: 18px; max-width: 500px; margin: 0 auto 40px; line-height: 1.6; }
+    .glow-text { background: linear-gradient(90deg, #58a6ff, #34c759); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    /* Buttons */
+    .cta-button { background: var(--text-main); color: var(--dark-bg); padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: transform 0.2s; display: inline-block; }
+    .cta-button:hover { transform: scale(1.05); }
+    .secondary-button { color: var(--text-main); margin-left: 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
+
+    /* Preview Card */
+    .preview-card { max-width: 500px; margin: 40px auto; text-align: left; background: #000; border: 1px solid #333; }
+    .preview-header { padding-bottom: 15px; border-bottom: 1px solid #222; margin-bottom: 15px; display: flex; align-items: center; }
+    .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+    .red { background: #ff5f56; } .yellow { background: #ffbd2e; } .green { background: #27c93f; }
+    .preview-label { font-size: 11px; color: #555; margin-left: 10px; text-transform: uppercase; font-weight: 800; }
+    .ai-typing { color: var(--glow-blue); font-family: monospace; margin-top: 15px; }
+
+    /* Dashboard Styles */
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; text-align: left; }
+    .status-indicator { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; }
+    .pulse-dot { height: 8px; width: 8px; background: #34c759; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 8px #34c759; animation: pulse 2s infinite; }
+    
+    .section-title { text-align: left; font-size: 20px; margin-bottom: 20px; }
+    .email-card { text-align: left; padding: 20px; transition: 0.3s; }
+    .email-card:hover { border-color: var(--glow-blue); }
+    .email-info { display: flex; justify-content: space-between; margin-bottom: 10px; }
+    .email-subj { font-weight: 700; font-size: 17px; }
+    .email-status { font-size: 12px; color: var(--glow-blue); background: rgba(88, 166, 255, 0.1); padding: 2px 8px; border-radius: 4px; }
+    .email-preview { color: var(--text-dim); font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
+    .listen-btn { color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 600; }
+
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
