@@ -1,30 +1,162 @@
 {% extends "base.html" %}
-{% block title %}Pending Actions - ERNESCO{% endblock %}
+{% block title %}Pending Actions | ERNESCO{% endblock %}
 
 {% block content %}
-<div style="text-align: left;">
-    <h1>Pending Actions</h1>
-    <div class="card" style="display: flex; align-items: center; justify-content: space-between; padding: 30px;">
-        <div style="text-align: center;">
-            <span style="font-size: 32px; font-weight: 700;">{{ count }}</span><br>
-            <span style="font-size: 11px; color: var(--apple-gray); text-transform: uppercase;">Received</span>
-        </div>
-        <div style="flex: 2; padding: 0 30px;">
-            <div style="width: 100%; background: #e5e5e5; height: 8px; border-radius: 4px; overflow: hidden;">
-                <div style="height: 100%; background: #34c759; width: {{ percentage }}%; transition: width 1s;"></div>
+<div class="pending-container">
+    <h1 class="page-title">Pending Actions</h1>
+
+    <div class="status-hero">
+        <div class="hero-layout">
+            <div class="stat-box">
+                <span class="stat-value">{{ count }}</span>
+                <span class="stat-label">In Queue</span>
             </div>
-            <p style="font-size: 12px; color: var(--apple-gray); text-align: center; margin-top: 8px;">{{ percentage }}% complete</p>
-        </div>
-        <div style="text-align: center;">
-            <span style="font-size: 32px; font-weight: 700; color: var(--apple-blue);">{{ working_on }}</span><br>
-            <span style="font-size: 11px; color: var(--apple-gray); text-transform: uppercase;">Processing</span>
+            
+            <div class="progress-section">
+                <p class="section-tag">Status Hero</p>
+                <div class="progress-track">
+                    <div class="progress-fill" style="width: {{ percentage }}%;"></div>
+                </div>
+                <p class="progress-text">{{ percentage }}% of queue complete</p>
+            </div>
+
+            <div class="stat-box">
+                <span class="stat-value active-text">{{ working_on }}</span>
+                <span class="stat-label">Active</span>
+            </div>
         </div>
     </div>
 
-    {% if not emails %}
-    <div class="card" style="text-align: center; color: var(--apple-gray);">
-        All actions complete. Your inbox is clear. 🌿
+    <div class="action-list">
+        {% for email in emails %}
+        <div class="action-item">
+            <span class="item-subject">{{ email.subject }}</span>
+            <div class="thinking-pill">
+                <span>Thinking...</span>
+                <div class="spinner-icon"></div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% if not emails %}
+        <div class="empty-card">
+            <p>No older actions. Your inbox is clear. 🌿</p>
+        </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
-{% endblock %}
+
+<style>
+    /* Dark Aesthetic Theme */
+    :root {
+        --dark-surface: #1a1a1c;
+        --card-surface: #252529;
+        --border-subtle: #333336;
+        --text-bright: #ffffff;
+        --text-muted: #a1a1a6;
+        --green-accent: #34c759;
+        --blue-glow: #58a6ff;
+    }
+
+    .pending-container {
+        max-width: 700px;
+        margin: 0 auto;
+        text-align: left;
+        color: var(--text-bright);
+    }
+
+    .page-title {
+        font-size: 34px;
+        font-weight: 700;
+        margin: 20px 0 30px 0;
+        letter-spacing: -0.8px;
+    }
+
+    /* Hero Styling */
+    .status-hero {
+        background: var(--card-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 20px;
+        padding: 30px;
+        margin-bottom: 25px;
+    }
+
+    .hero-layout {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+    }
+
+    .stat-box { text-align: left; min-width: 80px; }
+    .stat-value { font-size: 48px; font-weight: 700; display: block; line-height: 1; }
+    .active-text { color: var(--blue-glow); text-shadow: 0 0 15px rgba(88, 166, 255, 0.3); }
+    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 5px; display: block; }
+
+    .progress-section { flex-grow: 1; text-align: center; }
+    .section-tag { font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 12px 0; }
+    
+    .progress-track {
+        width: 100%;
+        background: #3a3a3c;
+        height: 12px;
+        border-radius: 10px;
+        overflow: hidden;
+        margin-bottom: 10px;
+    }
+
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #34c759, #4cd964);
+        border-radius: 10px;
+        transition: width 1s ease-in-out;
+    }
+
+    .progress-text { font-size: 13px; color: var(--text-muted); margin: 0; }
+
+    /* List Item Styling */
+    .action-item {
+        background: var(--card-surface);
+        border: 1px solid var(--border-subtle);
+        border-radius: 15px;
+        padding: 18px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .item-subject { font-size: 16px; font-weight: 500; }
+
+    .thinking-pill {
+        background: #323d4d;
+        color: #add1ff;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 13px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .spinner-icon {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(173, 209, 255, 0.2);
+        border-top: 2px solid #add1ff;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    .empty-card {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 15px;
+        padding: 40px;
+        text-align: center;
+        color: var(--text-muted);
+        border: 1px dashed var(--border-subtle);
+    }
+
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+</style>
