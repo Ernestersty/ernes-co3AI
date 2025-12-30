@@ -25,6 +25,29 @@ supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
+# Translation Dictionary
+LANGUAGES = {
+    'en': {'dash': 'Dashboard', 'conn': 'Connect', 'pend': 'Pending', 'sett': 'Settings', 'scan': 'Force Scan', 'dir': 'ltr'},
+    'sw': {'dash': 'Dashibodi', 'conn': 'Unganisha', 'pend': 'Inasubiri', 'sett': 'Mipangilio', 'scan': 'Anza Sasa', 'dir': 'ltr'},
+    'fr': {'dash': 'Tableau de bord', 'conn': 'Connecter', 'pend': 'En attente', 'sett': 'Paramètres', 'scan': 'Scanner', 'dir': 'ltr'},
+    'es': {'dash': 'Tablero', 'conn': 'Conectar', 'pend': 'Pendiente', 'sett': 'Ajustes', 'scan': 'Escanear', 'dir': 'ltr'},
+    'de': {'dash': 'Dashboard', 'conn': 'Verbinden', 'pend': 'Ausstehend', 'sett': 'Einstellungen', 'scan': 'Escanear', 'dir': 'ltr'},
+    'zu': {'dash': 'Ideshibhodi', 'conn': 'Xhuma', 'pend': 'Kulindile', 'sett': 'Izilungiselelo', 'scan': 'Skena', 'dir': 'ltr'},
+    'ru': {'dash': 'Панель', 'conn': 'Связь', 'pend': 'Ожидание', 'sett': 'Настройки', 'scan': 'Сканировать', 'dir': 'ltr'},
+    'it': {'dash': 'Dashboard', 'conn': 'Connetti', 'pend': 'In sospeso', 'sett': 'Impostazioni', 'scan': 'Scansione', 'dir': 'ltr'},
+    'ur': {'dash': 'ڈیش بورڈ', 'conn': 'رابطہ کریں', 'pend': 'باقی عمل', 'sett': 'ترجیحات', 'scan': 'اسکین کریں', 'dir': 'rtl'},
+    'ar': {'dash': 'لوحة القيادة', 'conn': 'اتصل', 'pend': 'قيد الانتظار', 'sett': 'الإعدادات', 'scan': 'فحص الآن', 'dir': 'rtl'},
+    'ms': {'dash': 'Papan Pemuka', 'conn': 'Sambung', 'pend': 'Menunggu', 'sett': 'Tetapan', 'scan': 'Imbas', 'dir': 'ltr'},
+    'hi': {'dash': 'डैशबोर्ड', 'conn': 'कनेक्ट करें', 'pend': 'लंबित', 'sett': 'सेटिंग्स', 'scan': 'स्कैन करें', 'dir': 'ltr'},
+    'ko': {'dash': '대시보드', 'conn': '연결', 'pend': '대기 중', 'sett': '설정', 'scan': '스캔', 'dir': 'ltr'},
+    'zh': {'dash': '仪表板', 'conn': '连接', 'pend': '待办事项', 'sett': '设置', 'scan': '强制扫描', 'dir': 'ltr'}
+}
+
+@app.context_processor
+def inject_translations():
+    user_lang = session.get('language', 'en')
+    return {'t': LANGUAGES.get(user_lang, LANGUAGES['en'])}
+
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/userinfo.email', 'openid']
 CLIENT_CONFIG = {"web": {"client_id": os.getenv("GOOGLE_CLIENT_ID"), "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"), "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token"}}
 PROD_REDIRECT = "https://ernesco.onrender.com/callback"
@@ -50,13 +73,18 @@ def scan_inboxes_and_reply():
             service = build('gmail', 'v1', credentials=creds)
             results = service.users().messages().list(userId='me', q="is:unread").execute()
             
+            # Use user's preferred language for AI if set, otherwise auto-detect
+            pref_lang = session.get('language', 'auto')
+
             for msg in results.get('messages', []):
                 msg_detail = service.users().messages().get(userId='me', id=msg['id']).execute()
                 snippet = msg_detail.get('snippet', '')
                 subject = next((h['value'] for h in msg_detail['payload']['headers'] if h['name'] == 'Subject'), 'No Subject')
                 
                 lang, mood = analyze_email(snippet)
-                prompt = f"Reply in {lang}. Mood: {mood}. Be professional. Draft a reply for: {snippet}"
+                target_lang = pref_lang if pref_lang != 'auto' else lang
+                
+                prompt = f"Reply in {target_lang}. Mood: {mood}. Be professional. Draft a reply for: {snippet}"
                 ai_response = model.generate_content(prompt)
                 reply = ai_response.text
 
@@ -69,12 +97,9 @@ def scan_inboxes_and_reply():
     except Exception as e:
         print(f"Error during scan: {e}")
 
-# Scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", seconds=90)
 scheduler.start()
-
-# --- ROUTES ---
 
 @app.route('/')
 def index():
@@ -85,13 +110,16 @@ def index():
         except: pass
     return render_template('index.html', logged_in=session.get('logged_in'), emails=emails)
 
-@app.route('/connect')
-def connect_email():
-    return render_template('connect_email.html')
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        session['language'] = request.form.get('language')
+        session['tone'] = request.form.get('tone')
+        return redirect(url_for('settings'))
+    return render_template('settings.html')
 
 @app.route('/pending')
 def pending_actions():
-    # Fetching real count for the progress bar
     count = 0
     if session.get('logged_in'):
         try:
@@ -100,9 +128,9 @@ def pending_actions():
         except: pass
     return render_template('pending_actions.html', count=count, working_on=0, percentage=100)
 
-@app.route('/settings')
-def settings():
-    return render_template('settings.html')
+@app.route('/connect')
+def connect_email():
+    return render_template('connect_email.html')
 
 @app.route('/force-scan')
 def force_scan():
@@ -113,7 +141,7 @@ def force_scan():
 def listen(log_id):
     try:
         log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
-        tts = gTTS(text=log.data['ai_reply'], lang='en')
+        tts = gTTS(text=log.data['ai_reply'], lang=session.get('language', 'en'))
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
@@ -136,16 +164,10 @@ def callback():
     flow.fetch_token(authorization_response=request.url.replace('http:', 'https:'))
     creds = flow.credentials
     user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
-    
     supabase.table("profiles").upsert({
-        "email": user_info['email'], 
-        "access_token": creds.token, 
-        "refresh_token": creds.refresh_token, 
-        "token_uri": creds.token_uri, 
-        "client_id": creds.client_id, 
-        "client_secret": creds.client_secret
+        "email": user_info['email'], "access_token": creds.token, "refresh_token": creds.refresh_token, 
+        "token_uri": creds.token_uri, "client_id": creds.client_id, "client_secret": creds.client_secret
     }, on_conflict="email").execute()
-    
     session['logged_in'] = True
     return redirect(url_for('index'))
 
