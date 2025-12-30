@@ -174,24 +174,53 @@ def login():
 
 @app.route('/callback')
 def callback():
-    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session.get('state'))
-    flow.redirect_uri = PROD_REDIRECT
-    flow.fetch_token(authorization_response=request.url.replace("http:", "https:"))
-    creds = flow.credentials
-    user_info = build("oauth2", "v2", credentials=creds).userinfo().get().execute()
+    print("==== CALLBACK HIT ====")
+    print("Session contents:", dict(session))
 
-    supabase.table("profiles").upsert(
-        {
-            "email": user_info.get("email"),
+    if 'state' not in session:
+        return "❌ SESSION LOST: state missing. Please login again.", 400
+
+    try:
+        flow = Flow.from_client_config(
+            CLIENT_CONFIG,
+            scopes=SCOPES,
+            state=session['state']
+        )
+        flow.redirect_uri = PROD_REDIRECT
+
+        print("Authorization response URL:", request.url)
+
+        flow.fetch_token(
+            authorization_response=request.url.replace('http:', 'https:')
+        )
+
+        creds = flow.credentials
+        print("✅ Token fetched")
+
+        user_info = build(
+            'oauth2', 'v2', credentials=creds
+        ).userinfo().get().execute()
+
+        print("User info:", user_info)
+
+        supabase.table("profiles").upsert({
+            "email": user_info['email'],
             "access_token": creds.token,
             "refresh_token": creds.refresh_token,
-            "token_expiry": str(creds.expiry) # Cast to string for Supabase safety
-        },
-        on_conflict="email"
-    ).execute()
+            "token_uri": creds.token_uri,
+            "client_id": creds.client_id,
+            "client_secret": creds.client_secret
+        }, on_conflict="email").execute()
 
-    session['logged_in'] = True
-    return redirect(url_for("index"))
+        print("✅ Supabase insert OK")
+
+        session['logged_in'] = True
+        return redirect(url_for('index'))
+
+    except Exception as e:
+        print("🔥 CALLBACK ERROR:", e)
+        return f"Callback error: {e}", 500
+
 
 @app.route('/logout')
 def logout():
