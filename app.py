@@ -16,7 +16,15 @@ load_dotenv()
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY")
+
+# 1. Added safe Secret Key handling
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-12345")
+
+# 2. Added Session Security for Production/Google OAuth
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE='None'
+)
 
 # Clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
@@ -73,10 +81,6 @@ def scan_inboxes_and_reply():
             service = build('gmail', 'v1', credentials=creds)
             results = service.users().messages().list(userId='me', q="is:unread").execute()
             
-            # Important: Since session isn't available in background threads, 
-            # we check the user's saved preferences from the profile table.
-            # (Note: In a full app, you'd save 'language' and 'tone' to the database)
-            # For now, we use the session or default to 'en'
             pref_lang = session.get('language', 'en')
             pref_tone = session.get('tone', 'professional')
 
@@ -87,7 +91,6 @@ def scan_inboxes_and_reply():
                 
                 lang, mood = analyze_email(snippet)
                 
-                # AI Instruction based on Settings
                 prompt = f"Reply in {pref_lang}. Make the tone {pref_tone}. The detected mood is {mood}. Draft a reply for: {snippet}"
                 ai_response = model.generate_content(prompt)
                 reply = ai_response.text
@@ -145,7 +148,6 @@ def force_scan():
 def listen(log_id):
     try:
         log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
-        # Voice also matches chosen language
         tts_lang = session.get('language', 'en')
         tts = gTTS(text=log.data['ai_reply'], lang=tts_lang)
         fp = io.BytesIO()
@@ -157,55 +159,40 @@ def listen(log_id):
 
 @app.route('/login')
 def login():
-    # As requested: using redirect_uri inside the Flow config
     flow = Flow.from_client_config(
         CLIENT_CONFIG,
         scopes=SCOPES,
         redirect_uri=PROD_REDIRECT
     )
-
-    # Added prompt='consent' to ensure we always get a refresh_token for the background scanner
     authorization_url, state = flow.authorization_url(
         access_type='offline',
         include_granted_scopes='true',
         prompt='consent' 
     )
-
     session['state'] = state
     return redirect(authorization_url)
+
 @app.route('/callback')
 def callback():
-    flow = Flow.from_client_config(
-        CLIENT_CONFIG,
-        scopes=SCOPES
-    )
-
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session.get('state'))
     flow.redirect_uri = PROD_REDIRECT
-
-    flow.fetch_token(
-        authorization_response=request.url.replace("http:", "https:")
-    )
-
+    flow.fetch_token(authorization_response=request.url.replace("http:", "https:"))
     creds = flow.credentials
-
-    user_info = build(
-        "oauth2", "v2", credentials=creds
-    ).userinfo().get().execute()
+    user_info = build("oauth2", "v2", credentials=creds).userinfo().get().execute()
 
     supabase.table("profiles").upsert(
         {
             "email": user_info.get("email"),
             "access_token": creds.token,
             "refresh_token": creds.refresh_token,
-            "token_expiry": creds.expiry
+            "token_expiry": str(creds.expiry) # Cast to string for Supabase safety
         },
         on_conflict="email"
     ).execute()
 
     session['logged_in'] = True
     return redirect(url_for("index"))
-       
-   
+
 @app.route('/logout')
 def logout():
     session.clear()
