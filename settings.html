@@ -1,173 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Settings | ERNESCO</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        :root {
-            --apple-bg: #f5f5f7;
-            --apple-blue: #0071e3;
-            --apple-green: #34c759;
-            --apple-gray: #86868b;
-            --apple-border: rgba(0,0,0,0.1);
-        }
+{% extends "base.html" %}
+{% block content %}
+<div class="settings-container">
+    <h1>{{ t.sett }}</h1>
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background: var(--apple-bg); margin: 0; color: #1d1d1f;
-        }
+    <form action="{{ url_for('settings') }}" method="POST">
+        <div class="card">
+            <label style="font-weight: 600; display: block; margin-bottom: 10px;">App Language</label>
+            <select name="language" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: #1c1c1e; color: white;">
+                <option value="en" {% if session.language == 'en' %}selected{% endif %}>English</option>
+                <option value="sw" {% if session.language == 'sw' %}selected{% endif %}>Kiswahili</option>
+                <option value="fr" {% if session.language == 'fr' %}selected{% endif %}>Français</option>
+                <option value="es" {% if session.language == 'es' %}selected{% endif %}>Español</option>
+                <option value="de" {% if session.language == 'de' %}selected{% endif %}>Deutsch</option>
+                <option value="zu" {% if session.language == 'zu' %}selected{% endif %}>isiZulu</option>
+                <option value="ru" {% if session.language == 'ru' %}selected{% endif %}>Русский</option>
+                <option value="it" {% if session.language == 'it' %}selected{% endif %}>Italiano</option>
+                <option value="ur" {% if session.language == 'ur' %}selected{% endif %}>اردو (Urdu)</option>
+                <option value="ar" {% if session.language == 'ar' %}selected{% endif %}>العربية (Arabic)</option>
+                <option value="ms" {% if session.language == 'ms' %}selected{% endif %}>Bahasa Melayu</option>
+                <option value="hi" {% if session.language == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                <option value="ko" {% if session.language == 'ko' %}selected{% endif %}>한국어</option>
+                <option value="zh" {% if session.language == 'zh' %}selected{% endif %}>中文 (Chinese)</option>
+            </select>
 
-        .settings-container { 
-            display: grid; grid-template-columns: 260px 1fr; 
-            max-width: 1000px; margin: 50px auto; gap: 40px; padding: 0 20px; 
-        }
-
-        /* Sidebar */
-        .sidebar-nav { list-style: none; padding: 0; position: sticky; top: 50px; }
-        .sidebar-nav li { padding: 12px 16px; border-radius: 10px; cursor: pointer; font-size: 14px; margin-bottom: 2px; }
-        .sidebar-nav li.active { background: rgba(0,0,0,0.06); font-weight: 600; }
-
-        /* Card Styling */
-        .settings-card { background: #fff; border-radius: 14px; border: 1px solid var(--apple-border); overflow: hidden; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); }
-        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #f5f5f7; }
-        .row-info label { display: block; font-size: 15px; font-weight: 500; }
-        .row-info p { font-size: 13px; color: var(--apple-gray); margin-top: 2px; }
-
-        /* Controls */
-        .apple-select { appearance: none; background: #f5f5f7; border: 1px solid #d2d2d7; border-radius: 8px; padding: 8px 32px 8px 12px; font-size: 13px; cursor: pointer; }
-        .segmented-control { display: flex; background: #f2f2f7; padding: 2px; border-radius: 9px; margin: 10px 20px 20px; }
-        .segment { flex: 1; border: none; background: none; padding: 8px; font-size: 13px; border-radius: 7px; cursor: pointer; transition: 0.2s; }
-        .segment.active { background: #fff; box-shadow: 0 2px 5px rgba(0,0,0,0.1); font-weight: 500; }
-
-        /* Preview Area */
-        .preview-box { background: #fbfbfd; border: 1px dashed #d2d2d7; border-radius: 10px; margin: 20px; padding: 15px; font-style: italic; color: #424245; font-size: 14px; }
-    </style>
-</head>
-<body>
-
-<div class="settings-container" id="mainContainer">
-    <aside>
-        <ul class="sidebar-nav">
-            <li class="active" id="nav-general">⚙️ General</li>
-            <li id="nav-ai">🧠 AI Preference</li>
-        </ul>
-    </aside>
-
-    <main>
-        <h1 id="txt-title">General</h1>
-
-        <h2 id="header-lang">Language</h2>
-        <div class="settings-card">
-            <div class="settings-row">
-                <div class="row-info">
-                    <label id="lbl-lang">App Language</label>
-                    <p id="sub-lang">Choose your preferred interface language.</p>
-                </div>
-                <select id="languageSelect" class="apple-select">
-                    <option value="en">English</option>
-                    <option value="fr">Français</option>
-                    <option value="sw">Kiswahili</option>
-                    <option value="zu">isiZulu</option>
-                    <option value="ur">اردو (Urdu)</option>
-                    <option value="de">Deutsch</option>
-                    <option value="bn">বাংলা (Bengali)</option>
-                    <option value="es">Español</option>
-                </select>
+            <label style="font-weight: 600; display: block; margin-top: 25px; margin-bottom: 10px;">Response Tone</label>
+            <input type="hidden" name="tone" id="toneInput" value="{{ session.get('tone', 'professional') }}">
+            <div style="display: flex; background: #1c1c1e; padding: 4px; border-radius: 10px; gap: 5px;">
+                <button type="button" class="tone-btn {% if session.get('tone') != 'friendly' %}active{% endif %}" onclick="setTone('professional', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Professional</button>
+                <button type="button" class="tone-btn {% if session.get('tone') == 'friendly' %}active{% endif %}" onclick="setTone('friendly', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Friendly</button>
             </div>
+
+            <button type="submit" style="width: 100%; margin-top: 30px; background: var(--apple-blue); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer;">Save Changes</button>
         </div>
-
-        <h2 id="header-personality">Personality</h2>
-        <div class="settings-card">
-            <div class="settings-row" style="border:none">
-                <div class="row-info">
-                    <label id="lbl-tone">Response Tone</label>
-                    <p id="sub-tone">How the AI speaks to others.</p>
-                </div>
-            </div>
-            <div class="segmented-control">
-                <button class="segment" data-tone="Professional" id="btn-p">Professional</button>
-                <button class="segment" data-tone="Friendly" id="btn-f">Friendly</button>
-                <button class="segment" data-tone="Concise" id="btn-c">Concise</button>
-            </div>
-            <div id="preview-area" class="preview-box">
-                "AI is drafting a preview..."
-            </div>
-        </div>
-    </main>
+    </form>
 </div>
 
+<style>
+    .tone-btn { background: none; }
+    .tone-btn.active { background: #3a3a3c; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+</style>
+
 <script>
-    const translations = {
-        en: { title: "General", lang: "App Language", subL: "Choose language.", tone: "Response Tone", subT: "How AI speaks.", p: "Professional", f: "Friendly", c: "Concise", prev: "Hello, I have received your message and will respond shortly." },
-        fr: { title: "Général", lang: "Langue de l'application", subL: "Choisissez la langue.", tone: "Ton de réponse", subT: "Comment l'IA parle.", p: "Professionnel", f: "Amical", c: "Concis", prev: "Bonjour, j'ai bien reçu votre message et je vous répondrai sous peu." },
-        sw: { title: "Jumla", lang: "Lugha ya Programu", subL: "Chagua lugha.", tone: "Sauti ya AI", subT: "Jinsi AI inavyosema.", p: "Kitalaam", f: "Kirafiki", c: "Fupi", prev: "Habari, nimepokea ujumbe wako na nitajibu hivi karibuni." },
-        zu: { title: "Okuvamile", lang: "Ulimi lwe-App", subL: "Khetha ulimi.", tone: "Iphimbo", subT: "Indlela i-AI ekhuluma ngayo.", p: "Ngokomsebenzi", f: "Ngobungane", c: "Kafushane", prev: "Sawubona, ngiyitholile imilayezo yakho futhi ngizophendula maduze." },
-        ur: { title: "عام", lang: "ایپ کی زبان", subL: "زبان منتخب کریں۔", tone: "لہجہ", subT: "اے آئی کیسے بات کرتی ہے۔", p: "پیشہ ورانہ", f: "دوستانہ", c: "جامع", prev: "ہیلو، مجھے آپ کا پیغام مل گیا ہے اور میں جلد ہی جواب دوں گا۔" },
-        de: { title: "Allgemein", lang: "App-Sprache", subL: "Sprache wählen.", tone: "Antwortton", subT: "Wie die KI spricht.", p: "Professionell", f: "Freundlich", c: "Prägnant", prev: "Hallo, ich habe Ihre Nachricht erhalten und werde in Kürze antworten." },
-        bn: { title: "সাধারণ", lang: "অ্যাপের ভাষা", subL: "ভাষা চয়ন করুন।", tone: "উত্তরের ধরন", subT: "AI যেভাবে কথা বলে।", p: "পেশাদার", f: "বন্ধুত্বপূর্ণ", c: "সংক্ষিপ্ত", prev: "হ্যালো, আমি আপনার বার্তা পেয়েছি এবং শীঘ্রই উত্তর দেব।" },
-        es: { title: "General", lang: "Idioma", subL: "Elegir idioma.", tone: "Tono", subT: "Cómo habla la IA.", p: "Profesional", f: "Amistoso", c: "Conciso", prev: "Hola, he recibido su mensaje y le responderé a la brevedad." }
-    };
-
-    function updateUI(langCode) {
-        const t = translations[langCode] || translations.en;
-        document.getElementById('txt-title').innerText = t.title;
-        document.getElementById('lbl-lang').innerText = t.lang;
-        document.getElementById('sub-lang').innerText = t.subL;
-        document.getElementById('lbl-tone').innerText = t.tone;
-        document.getElementById('sub-tone').innerText = t.subT;
-        document.getElementById('btn-p').innerText = t.p;
-        document.getElementById('btn-f').innerText = t.f;
-        document.getElementById('btn-c').innerText = t.c;
-        document.getElementById('preview-area').innerText = t.prev;
-
-        // RTL Support for Urdu
-        if (langCode === 'ur') {
-            document.documentElement.dir = "rtl";
-            document.getElementById('mainContainer').style.gridTemplateColumns = "1fr 260px";
-        } else {
-            document.documentElement.dir = "ltr";
-            document.getElementById('mainContainer').style.gridTemplateColumns = "260px 1fr";
-        }
+    function setTone(val, btn) {
+        document.getElementById('toneInput').value = val;
+        document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
     }
-
-    // Logic to simulate tone changes in the preview
-    function updatePreview(tone, lang) {
-        const t = translations[lang] || translations.en;
-        let text = t.prev;
-        if(tone === "Concise") text = text.split('.')[0] + ".";
-        if(tone === "Friendly") text = "👋 " + text;
-        document.getElementById('preview-area').innerText = text;
-    }
-
-    const supabase = supabase.createClient('YOUR_URL', 'YOUR_KEY');
-    const userEmail = localStorage.getItem('userEmail');
-
-    document.getElementById('languageSelect').addEventListener('change', async (e) => {
-        updateUI(e.target.value);
-        await supabase.from('profiles').update({ lang_code: e.target.value }).eq('email', userEmail);
-    });
-
-    document.querySelectorAll('.segment').forEach(btn => {
-        btn.addEventListener('click', async function() {
-            document.querySelectorAll('.segment').forEach(s => s.classList.remove('active'));
-            this.classList.add('active');
-            updatePreview(this.dataset.tone, document.getElementById('languageSelect').value);
-            await supabase.from('profiles').update({ ai_tone: this.dataset.tone }).eq('email', userEmail);
-        });
-    });
-
-    async function load() {
-        const { data } = await supabase.from('profiles').select('*').eq('email', userEmail).single();
-        if (data) {
-            document.getElementById('languageSelect').value = data.lang_code;
-            updateUI(data.lang_code);
-            const activeBtn = document.querySelector(`[data-tone="${data.ai_tone}"]`);
-            if(activeBtn) activeBtn.classList.add('active');
-        }
-    }
-    load();
 </script>
-</body>
-                        </html>
+{% endblock %}
+        
+   
