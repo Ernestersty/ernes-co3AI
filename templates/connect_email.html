@@ -1,141 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Connect Email | ERNESCO</title>
-    <style>
-        :root {
-            --apple-bg: #f5f5f7;
-            --apple-blue: #0071e3;
-            --apple-border: rgba(0,0,0,0.1);
-            --apple-gray: #86868b;
-        }
+{% extends "base.html" %}
+{% block title %}Connect Email - ERNESCO{% endblock %}
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-            background-color: var(--apple-bg); 
-            margin: 0; 
-            color: #1d1d1f;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
+{% block content %}
+<div class="card" style="max-width: 420px; margin: auto; text-align: left;">
+    <a href="{{ url_for('index') }}" style="color: var(--apple-blue); font-size: 13px; text-decoration: none;">← Cancel</a>
+    <h2 style="margin-top: 20px;">Connect Email</h2>
+    <p style="color: var(--apple-gray); font-size: 14px; margin-bottom: 24px;">Enter your App Password to allow Gemini to process your emails.</p>
 
-        .setup-card { 
-            width: 100%;
-            max-width: 420px; 
-            background: #fff; 
-            border-radius: 20px; 
-            border: 1px solid var(--apple-border); 
-            padding: 32px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-        }
-
-        .back-link { 
-            font-size: 13px; 
-            color: var(--apple-blue); 
-            text-decoration: none; 
-            display: block; 
-            margin-bottom: 24px;
-        }
-
-        h2 { font-size: 24px; font-weight: 700; margin: 0 0 8px; letter-spacing: -0.5px; }
-        p.subtitle { color: var(--apple-gray); font-size: 14px; margin-bottom: 24px; }
-
-        .form-group { margin-bottom: 16px; }
-        
-        label { 
-            display: block; 
-            font-size: 13px; 
-            font-weight: 600; 
-            margin-bottom: 6px; 
-            margin-left: 2px;
-        }
-
-        input { 
-            width: 100%; 
-            padding: 10px 14px; 
-            border-radius: 10px; 
-            border: 1px solid #d2d2d7; 
-            font-size: 15px; 
-            background: #fbfbfd;
-            box-sizing: border-box;
-            transition: all 0.2s;
-        }
-
-        input:focus { 
-            outline: none; 
-            border-color: var(--apple-blue); 
-            box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); 
-            background: #fff;
-        }
-
-        .btn-primary { 
-            width: 100%;
-            background: var(--apple-blue); 
-            color: #fff; 
-            border: none; 
-            padding: 12px; 
-            border-radius: 12px; 
-            font-size: 15px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            margin-top: 12px;
-            transition: opacity 0.2s;
-        }
-
-        .btn-primary:hover { opacity: 0.9; }
-
-        .server-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-
-        .message { 
-            background: #e8f5e9; 
-            color: #2e7d32; 
-            padding: 12px; 
-            border-radius: 10px; 
-            font-size: 13px; 
-            margin-bottom: 20px; 
-            text-align: center;
-        }
-    </style>
-</head>
-<body>
-
-    <div class="setup-card">
-        <a href="{{ url_for('index') }}" class="back-link">← Cancel</a>
-        <h2>Connect Email</h2>
-        <p class="subtitle">Enter your IMAP/SMTP details to allow Ernesco to process your emails.</p>
-
-        {% if message %}<div class="message">{{ message }}</div>{% endif %}
-
-        <form method="post">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" placeholder="name@company.com" required>
-            </div>
-
-            <div class="form-group">
-                <label for="password">App Password</label>
-                <input type="password" id="password" name="password" placeholder="••••••••••••" required>
-            </div>
-
-            <div class="server-grid">
-                <div class="form-group">
-                    <label for="imap_server">IMAP Server</label>
-                    <input type="text" id="imap_server" name="imap_server" value="imap.gmail.com">
-                </div>
-                <div class="form-group">
-                    <label for="smtp_server">SMTP Server</label>
-                    <input type="text" id="smtp_server" name="smtp_server" value="smtp.gmail.com">
-                </div>
-            </div>
-
-            <button type="submit" class="btn-primary">Connect Account</button>
-        </form>
-    </div>
-
-</body>
-</html>
-           
+    <form method="post">
+        <input type="email" name="email" placeholder="Email Address" style="margin-bottom: 15px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #d2d2d7;" required>
+        <input type="password" name="password" placeholder="App Password" style="margin-bottom: 15px; width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #d2d2d7;" required>
+        <button type="submit" style="width: 100%; background: var(--apple-blue); color: white; border: none; padding: 14px; border-radius: 12px; font-weight: 600; cursor: pointer;">Connect Account</button>
+    </form>
+</div>
+{% endblock %}
