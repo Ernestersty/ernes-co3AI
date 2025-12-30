@@ -1,22 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Settings - ERNESCO{% endblock %}
-
 {% block content %}
-<div style="text-align: left;">
-    <h1>Settings</h1>
-    <div class="card">
-        <label style="font-weight: 600; display: block; margin-bottom: 10px;">App Language</label>
-        <select id="languageSelect" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #d2d2d7; background: #f5f5f7;">
-            <option value="en">English</option>
-            <option value="sw">Kiswahili</option>
-            <option value="fr">Français</option>
-        </select>
+<div class="settings-container">
+    <h1>{{ t.sett }}</h1>
 
-        <label style="font-weight: 600; display: block; margin-top: 25px; margin-bottom: 10px;">Response Tone</label>
-        <div style="display: flex; background: #f2f2f7; padding: 4px; border-radius: 10px; gap: 5px;">
-            <button class="segment" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">Professional</button>
-            <button class="segment" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; background: none;">Friendly</button>
+    <form action="{{ url_for('settings') }}" method="POST">
+        <div class="card">
+            <label style="font-weight: 600; display: block; margin-bottom: 10px;">App Language</label>
+            <select name="language" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: #1c1c1e; color: white;">
+                <option value="en" {% if session.language == 'en' %}selected{% endif %}>English</option>
+                <option value="sw" {% if session.language == 'sw' %}selected{% endif %}>Kiswahili</option>
+                <option value="fr" {% if session.language == 'fr' %}selected{% endif %}>Français</option>
+                <option value="es" {% if session.language == 'es' %}selected{% endif %}>Español</option>
+                <option value="de" {% if session.language == 'de' %}selected{% endif %}>Deutsch</option>
+                <option value="zu" {% if session.language == 'zu' %}selected{% endif %}>isiZulu</option>
+                <option value="ru" {% if session.language == 'ru' %}selected{% endif %}>Русский</option>
+                <option value="it" {% if session.language == 'it' %}selected{% endif %}>Italiano</option>
+                <option value="ur" {% if session.language == 'ur' %}selected{% endif %}>اردو (Urdu)</option>
+                <option value="ar" {% if session.language == 'ar' %}selected{% endif %}>العربية (Arabic)</option>
+                <option value="ms" {% if session.language == 'ms' %}selected{% endif %}>Bahasa Melayu</option>
+                <option value="hi" {% if session.language == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
+                <option value="ko" {% if session.language == 'ko' %}selected{% endif %}>한국어</option>
+                <option value="zh" {% if session.language == 'zh' %}selected{% endif %}>中文 (Chinese)</option>
+            </select>
+
+            <label style="font-weight: 600; display: block; margin-top: 25px; margin-bottom: 10px;">Response Tone</label>
+            <input type="hidden" name="tone" id="toneInput" value="{{ session.get('tone', 'professional') }}">
+            <div style="display: flex; background: #1c1c1e; padding: 4px; border-radius: 10px; gap: 5px;">
+                <button type="button" class="tone-btn {% if session.get('tone') != 'friendly' %}active{% endif %}" onclick="setTone('professional', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Professional</button>
+                <button type="button" class="tone-btn {% if session.get('tone') == 'friendly' %}active{% endif %}" onclick="setTone('friendly', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Friendly</button>
+            </div>
+
+            <button type="submit" style="width: 100%; margin-top: 30px; background: var(--apple-blue); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer;">Save Changes</button>
         </div>
-    </div>
+    </form>
 </div>
+
+<style>
+    .tone-btn { background: none; }
+    .tone-btn.active { background: #3a3a3c; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+</style>
+
+<script>
+    function setTone(val, btn) {
+        document.getElementById('toneInput').value = val;
+        document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+    }
+</script>
 {% endblock %}
