@@ -176,31 +176,31 @@ def login():
 def callback():
     flow = Flow.from_client_config(
         CLIENT_CONFIG,
-        scopes=SCOPES
+        scopes=SCOPES,
+        state=session.get('state')
     )
     flow.redirect_uri = PROD_REDIRECT
-
-    flow.fetch_token(
-        authorization_response=request.url.replace("http:", "https:")
-    )
+    flow.fetch_token(authorization_response=request.url.replace('http:', 'https:'))
 
     creds = flow.credentials
 
     user_info = build(
-        "oauth2", "v2", credentials=creds
+        'oauth2',
+        'v2',
+        credentials=creds
     ).userinfo().get().execute()
 
     supabase.table("profiles").upsert(
         {
-            "email": user_info.get("email"),
+            "email": user_info["email"],
             "access_token": creds.token,
             "refresh_token": creds.refresh_token,
-            "token_expiry": creds.expiry
+            "token_expiry": creds.expiry.isoformat() if creds.expiry else None
         },
         on_conflict="email"
     ).execute()
 
-    session['logged_in'] = True
+    session["logged_in"] = True
     return redirect(url_for("index"))
 
 
