@@ -6,7 +6,7 @@ from supabase import create_client
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-import google.generativeai as genai  # <--- Changed from openai
+import google.generativeai as genai
 from apscheduler.schedulers.background import BackgroundScheduler
 from textblob import TextBlob
 from langdetect import detect
@@ -21,7 +21,7 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 # Clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-# Configure Gemini Brain
+# Configure Gemini
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -43,6 +43,7 @@ def scan_inboxes_and_reply():
     try:
         users = supabase.table("profiles").select("*").execute()
         for user in users.data:
+            if not user.get('access_token'): continue
             creds = Credentials(token=user['access_token'], refresh_token=user['refresh_token'], 
                                 token_uri=user['token_uri'], client_id=user['client_id'], 
                                 client_secret=user['client_secret'], scopes=SCOPES)
@@ -55,9 +56,7 @@ def scan_inboxes_and_reply():
                 subject = next((h['value'] for h in msg_detail['payload']['headers'] if h['name'] == 'Subject'), 'No Subject')
                 
                 lang, mood = analyze_email(snippet)
-                
-                # Gemini replaces OpenAI here
-                prompt = f"Reply in {lang}. Mood: {mood}. Be professional: {snippet}"
+                prompt = f"Reply in {lang}. Mood: {mood}. Be professional. Draft a reply for: {snippet}"
                 ai_response = model.generate_content(prompt)
                 reply = ai_response.text
 
@@ -68,13 +67,15 @@ def scan_inboxes_and_reply():
 
                 service.users().messages().batchModify(userId='me', body={'ids': [msg['id']], 'removeLabelIds': ['UNREAD']}).execute()
     except Exception as e:
-        print(f"Error: {e}")
+        print(f"Error during scan: {e}")
 
+# Scheduler
 scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", seconds=90)
 scheduler.start()
 
-# ... (rest of your routes remain the same)
+# --- ROUTES ---
+
 @app.route('/')
 def index():
     emails = []
@@ -84,14 +85,41 @@ def index():
         except: pass
     return render_template('index.html', logged_in=session.get('logged_in'), emails=emails)
 
+@app.route('/connect')
+def connect_email():
+    return render_template('connect_email.html')
+
+@app.route('/pending')
+def pending_actions():
+    # Fetching real count for the progress bar
+    count = 0
+    if session.get('logged_in'):
+        try:
+            logs = supabase.table("activity_logs").select("*", count="exact").execute()
+            count = logs.count if logs.count else 0
+        except: pass
+    return render_template('pending_actions.html', count=count, working_on=0, percentage=100)
+
+@app.route('/settings')
+def settings():
+    return render_template('settings.html')
+
+@app.route('/force-scan')
+def force_scan():
+    scan_inboxes_and_reply()
+    return redirect(url_for('index'))
+
 @app.route('/listen/<log_id>')
 def listen(log_id):
-    log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
-    tts = gTTS(text=log.data['ai_reply'], lang='en')
-    fp = io.BytesIO()
-    tts.write_to_fp(fp)
-    fp.seek(0)
-    return send_file(fp, mimetype='audio/mp3')
+    try:
+        log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
+        tts = gTTS(text=log.data['ai_reply'], lang='en')
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+        return send_file(fp, mimetype='audio/mp3')
+    except:
+        return "Audio not available", 404
 
 @app.route('/login')
 def login():
@@ -108,7 +136,16 @@ def callback():
     flow.fetch_token(authorization_response=request.url.replace('http:', 'https:'))
     creds = flow.credentials
     user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
-    supabase.table("profiles").upsert({"email": user_info['email'], "access_token": creds.token, "refresh_token": creds.refresh_token, "token_uri": creds.token_uri, "client_id": creds.client_id, "client_secret": creds.client_secret}, on_conflict="email").execute()
+    
+    supabase.table("profiles").upsert({
+        "email": user_info['email'], 
+        "access_token": creds.token, 
+        "refresh_token": creds.refresh_token, 
+        "token_uri": creds.token_uri, 
+        "client_id": creds.client_id, 
+        "client_secret": creds.client_secret
+    }, on_conflict="email").execute()
+    
     session['logged_in'] = True
     return redirect(url_for('index'))
 
