@@ -1,122 +1,53 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ERNESCO | AI Email Intelligence</title>
-    <style>
-        :root { 
-            --apple-blue: #0071e3; 
-            --apple-text: #1d1d1f; 
-            --apple-gray: #86868b; 
-            --apple-bg: #f5f5f7; 
-            --white: #ffffff;
-        }
+{% extends "base.html" %}
 
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--apple-bg); 
-            color: var(--apple-text); 
-            margin: 0; 
-            display: flex; 
-            flex-direction: column; 
-            align-items: center; 
-            -webkit-font-smoothing: antialiased;
-        }
+{% block title %}Dashboard | ERNESCO{% endblock %}
 
-        nav { 
-            width: 100%; 
-            background: rgba(255, 255, 255, 0.72); 
-            backdrop-filter: saturate(180%) blur(20px); 
-            border-bottom: 1px solid rgba(0,0,0,0.1); 
-            padding: 16px 0; 
-            display: flex; 
-            justify-content: center; 
-            gap: 30px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-        }
+{% block content %}
+<div style="text-align: center;">
+    <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" 
+         style="width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px;" alt="Logo">
+    <h1>ERNESCO</h1>
+    <p style="color: var(--apple-gray); font-size: 19px; margin-top: 10px; margin-bottom: 40px;">AI Intelligence with Google Gemini.</p>
 
-        nav a { text-decoration: none; color: var(--apple-text); font-size: 13px; opacity: 0.8; transition: opacity 0.2s; }
-        nav a:hover { opacity: 1; }
-
-        .container { width: 90%; max-width: 600px; margin: 60px auto; text-align: center; }
-        .brand-logo { width: 72px; height: 72px; border-radius: 18px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        h1 { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; margin: 0; }
-        .subtitle { color: var(--apple-gray); font-size: 19px; margin-top: 10px; margin-bottom: 40px; }
-        .card { background: var(--white); border-radius: 24px; padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); }
-
-        .google-btn { display: flex; align-items: center; justify-content: center; gap: 12px; background: #fff; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 17px; transition: transform 0.2s; }
-        .google-btn:hover { transform: scale(1.02); border-color: #86868b; }
-        .google-btn img { width: 22px; height: 22px; }
-
-        .activity-hub { margin-top: 50px; text-align: left; }
-        .email-card { background: var(--white); border-radius: 20px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
-        .ai-draft-tag { background: #eef6ff; color: var(--apple-blue); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
-
-        .status-badge { display: inline-flex; align-items: center; gap: 8px; background: #eafbea; color: #1a7d1a; padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 600; }
-        .dot { width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
-
-        .listen-btn { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600; margin-right: 15px; }
-        
-        .action-link { font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 500; }
-        .action-link:hover { text-decoration: underline; }
-    </style>
-</head>
-<body>
-
-    <nav>
-        <a href="/">Dashboard</a>
-        {% if logged_in %}
-            <a href="/force-scan" style="color: var(--apple-blue); font-weight: 600;">⚡ Force Scan</a>
-            <a href="/download-report">📄 Download PDF</a>
-        {% endif %}
-    </nav>
-
-    <div class="container">
-        <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" class="brand-logo" alt="Logo">
-        <h1>ERNESCO</h1>
-        <p class="subtitle">AI Intelligence with Google Gemini.</p>
-
-        <div class="card">
-            {% if not logged_in %}
-                <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow Gemini to manage your drafts.</p>
-                <a href="/login" class="google-btn">
-                    <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
-                    <span>Continue with Google</span>
-                </a>
-            {% else %}
-                <div class="status-badge">
-                    <span class="dot"></span>
-                    Gemini is Active & Scanning
-                </div>
-                <div style="margin-top: 20px;">
-                    <a href="/download-report" class="action-link" style="margin-right: 20px;">Download Full PDF Report</a>
-                    <a href="/logout" style="color: var(--apple-gray); font-size: 13px; text-decoration: none;">Disconnect Account</a>
-                </div>
-            {% endif %}
-        </div>
-
-        {% if emails %}
-        <div class="activity-hub">
-            <h3 style="font-size: 13px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em; margin-bottom: 20px;">Recent AI Intelligence</h3>
-            {% for email in emails %}
-            <div class="email-card">
-                <div style="display:flex; justify-content: space-between; align-items: center;">
-                    <h4 style="margin: 0; font-size: 17px;">{{ email.subject }}</h4>
-                    <span class="ai-draft-tag">{{ email.status }}</span>
-                </div>
-                <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
-                <div style="margin-top: 10px;">
-                    <a href="/listen/{{ email.id }}" target="_blank" class="listen-btn">🔊 Listen to AI Voice</a>
-                </div>
+    <div class="card">
+        {% if not logged_in %}
+            <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow Gemini to manage your drafts.</p>
+            <a href="/login" class="google-btn" style="display: flex; align-items: center; justify-content: center; gap: 12px; background: #fff; color: #1d1d1f; border: 1px solid #d2d2d7; padding: 16px 32px; border-radius: 14px; text-decoration: none; font-weight: 600; font-size: 17px;">
+                <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" style="width: 22px; height: 22px;" alt="Google">
+                <span>Continue with Google</span>
+            </a>
+        {% else %}
+            <div style="display: inline-flex; align-items: center; gap: 8px; background: #eafbea; color: #1a7d1a; padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 600;">
+                <span style="width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite;"></span>
+                Gemini is Active & Scanning
             </div>
-            {% endfor %}
-        </div>
+            <div style="margin-top: 20px;">
+                <a href="/download-report" style="font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 500; margin-right: 20px;">Download Full PDF Report</a>
+                <a href="/logout" style="color: var(--apple-gray); font-size: 13px; text-decoration: none;">Disconnect Account</a>
+            </div>
         {% endif %}
     </div>
 
-</body>
-</html>
+    {% if emails %}
+    <div style="margin-top: 50px; text-align: left;">
+        <h3 style="font-size: 13px; text-transform: uppercase; color: var(--apple-gray); letter-spacing: 0.05em; margin-bottom: 20px;">Recent AI Intelligence</h3>
+        {% for email in emails %}
+        <div class="card" style="padding: 24px; margin-bottom: 16px; text-align: left;">
+            <div style="display:flex; justify-content: space-between; align-items: center;">
+                <h4 style="margin: 0; font-size: 17px;">{{ email.subject }}</h4>
+                <span style="background: #eef6ff; color: var(--apple-blue); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase;">{{ email.status }}</span>
+            </div>
+            <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
+            <div style="margin-top: 10px;">
+                <a href="/listen/{{ email.id }}" target="_blank" style="font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600;">🔊 Listen to AI Voice</a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+</style>
+{% endblock %}
