@@ -1,116 +1,30 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pending Actions | ERNESCO</title>
-    <style>
-        :root {
-            --apple-blue: #0071e3;
-            --apple-green: #34c759;
-            --apple-bg: #f5f5f7;
-            --apple-border: #d2d2d7;
-        }
+{% extends "base.html" %}
+{% block title %}Pending Actions - ERNESCO{% endblock %}
 
-        body { font-family: -apple-system, sans-serif; background: var(--apple-bg); margin: 0; color: #1d1d1f; }
-        .container { max-width: 800px; margin: 40px auto; padding: 20px; }
-
-        /* Progress Section */
-        .status-hero {
-            background: white;
-            border-radius: 18px;
-            padding: 30px;
-            margin-bottom: 30px;
-            border: 1px solid var(--apple-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .stat-group { text-align: center; flex: 1; }
-        .stat-value { font-size: 32px; font-weight: 700; display: block; }
-        .stat-label { font-size: 13px; color: #86868b; text-transform: uppercase; }
-
-        /* Progress Bar */
-        .progress-container { width: 100%; background: #e5e5e5; height: 8px; border-radius: 4px; margin: 20px 0; overflow: hidden; }
-        .progress-fill { 
-            height: 100%; 
-            background: var(--apple-green); 
-            width: {{ percentage }}%; /* Dynamic from Flask */
-            transition: width 1s ease-in-out;
-        }
-
-        /* Pending Item Cards */
-        .pending-card {
-            background: white;
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 15px;
-            border: 1px solid var(--apple-border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .spinner {
-            width: 20px; height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--apple-blue);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-
-        .btn-view { color: var(--apple-blue); text-decoration: none; font-size: 14px; font-weight: 500; }
-    </style>
-</head>
-<body>
-
-<div class="container">
-    <a href="/" style="text-decoration:none; color: var(--apple-blue); font-size: 14px;">← Dashboard</a>
-    <h1 style="margin-top:20px;">Pending Actions</h1>
-
-    <div class="status-hero">
-        <div class="stat-group">
-            <span class="stat-value">{{ count }}</span>
-            <span class="stat-label">Received</span>
+{% block content %}
+<div style="text-align: left;">
+    <h1>Pending Actions</h1>
+    <div class="card" style="display: flex; align-items: center; justify-content: space-between; padding: 30px;">
+        <div style="text-align: center;">
+            <span style="font-size: 32px; font-weight: 700;">{{ count }}</span><br>
+            <span style="font-size: 11px; color: var(--apple-gray); text-transform: uppercase;">Received</span>
         </div>
-        <div style="flex: 2; padding: 0 40px;">
-            <div class="progress-container">
-                <div class="progress-fill"></div>
+        <div style="flex: 2; padding: 0 30px;">
+            <div style="width: 100%; background: #e5e5e5; height: 8px; border-radius: 4px; overflow: hidden;">
+                <div style="height: 100%; background: #34c759; width: {{ percentage }}%; transition: width 1s;"></div>
             </div>
-            <span style="font-size: 13px; color: #86868b; text-align: center; display: block;">
-                {{ percentage }}% of queue completed
-            </span>
+            <p style="font-size: 12px; color: var(--apple-gray); text-align: center; margin-top: 8px;">{{ percentage }}% complete</p>
         </div>
-        <div class="stat-group">
-            <span class="stat-value" style="color: var(--apple-blue);">{{ working_on }}</span>
-            <span class="stat-label">Processing</span>
+        <div style="text-align: center;">
+            <span style="font-size: 32px; font-weight: 700; color: var(--apple-blue);">{{ working_on }}</span><br>
+            <span style="font-size: 11px; color: var(--apple-gray); text-transform: uppercase;">Processing</span>
         </div>
     </div>
-
-    {% for email in emails %}
-    <div class="pending-card">
-        <div>
-            <div style="font-weight: 600;">{{ email.from }}</div>
-            <div style="font-size: 13px; color: #86868b; margin-top: 4px;">{{ email.subject }}</div>
-        </div>
-        
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <span style="font-size: 12px; color: var(--apple-blue);">Thinking...</span>
-            <div class="spinner"></div>
-        </div>
-    </div>
-    {% endfor %}
 
     {% if not emails %}
-    <div style="text-align: center; padding: 40px; color: #86868b;">
+    <div class="card" style="text-align: center; color: var(--apple-gray);">
         All actions complete. Your inbox is clear. 🌿
     </div>
     {% endif %}
 </div>
-
-</body>
-                </html>
-           
+{% endblock %}
