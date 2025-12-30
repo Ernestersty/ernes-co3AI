@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ session.get('language', 'en') }}" dir="{{ t.dir }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,10 +21,9 @@
             background-color: var(--dark-bg); 
             color: var(--text-main); 
             margin: 0; 
-            -webkit-font-smoothing: antialiased;
+            text-align: inherit;
         }
 
-        /* Navigation Bar */
         nav { 
             width: 100%; 
             background: rgba(26, 26, 28, 0.8); 
@@ -34,68 +33,28 @@
             display: flex; 
             justify-content: center; 
             gap: 30px; 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
+            position: sticky; top: 0; z-index: 1000; 
         }
 
-        nav a { 
-            text-decoration: none; 
-            color: var(--text-dim); 
-            font-size: 13px; 
-            font-weight: 500;
-            transition: color 0.2s; 
-        }
-
+        nav a { text-decoration: none; color: var(--text-dim); font-size: 13px; font-weight: 500; transition: 0.2s; }
         nav a:hover { color: var(--text-main); }
-        
-        /* The Force Scan Button */
-        .force-scan-btn { 
-            color: var(--accent-orange) !important; 
-            font-weight: 700 !important;
-            text-shadow: 0 0 10px rgba(255, 149, 0, 0.3);
-        }
+        .force-scan-btn { color: var(--accent-orange) !important; font-weight: 700; }
 
-        /* Standard Container */
-        .container { 
-            width: 90%; 
-            max-width: 700px; 
-            margin: 40px auto; 
-        }
-
-        /* Global Card Style */
-        .card { 
-            background: var(--card-bg); 
-            border-radius: 20px; 
-            padding: 30px; 
-            border: 1px solid var(--border-color); 
-            margin-bottom: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        }
-
-        h1 { 
-            font-size: 34px; 
-            font-weight: 700; 
-            letter-spacing: -0.03em; 
-            margin-bottom: 20px; 
-        }
-
-        /* Link highlighting for current page */
-        .active-nav { color: var(--text-main); font-weight: 700; }
+        .container { width: 90%; max-width: 700px; margin: 40px auto; }
+        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        h1 { font-size: 34px; font-weight: 700; margin-bottom: 20px; }
     </style>
 </head>
 <body>
     <nav>
-        <a href="{{ url_for('index') }}">Dashboard</a>
-        <a href="{{ url_for('connect_email') }}">Connect</a>
-        <a href="{{ url_for('pending_actions') }}">Pending</a>
-        <a href="{{ url_for('settings') }}">Settings</a>
-        <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ Force Scan</a>
+        <a href="{{ url_for('index') }}">{{ t.dash }}</a>
+        <a href="{{ url_for('connect_email') }}">{{ t.conn }}</a>
+        <a href="{{ url_for('pending_actions') }}">{{ t.pend }}</a>
+        <a href="{{ url_for('settings') }}">{{ t.sett }}</a>
+        <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ {{ t.scan }}</a>
     </nav>
-
     <div class="container">
         {% block content %}{% endblock %}
     </div>
 </body>
 </html>
-       
