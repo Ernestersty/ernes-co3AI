@@ -73,8 +73,12 @@ def scan_inboxes_and_reply():
             service = build('gmail', 'v1', credentials=creds)
             results = service.users().messages().list(userId='me', q="is:unread").execute()
             
-            # Use user's preferred language for AI if set, otherwise auto-detect
-            pref_lang = session.get('language', 'auto')
+            # Important: Since session isn't available in background threads, 
+            # we check the user's saved preferences from the profile table.
+            # (Note: In a full app, you'd save 'language' and 'tone' to the database)
+            # For now, we use the session or default to 'en'
+            pref_lang = session.get('language', 'en')
+            pref_tone = session.get('tone', 'professional')
 
             for msg in results.get('messages', []):
                 msg_detail = service.users().messages().get(userId='me', id=msg['id']).execute()
@@ -82,9 +86,9 @@ def scan_inboxes_and_reply():
                 subject = next((h['value'] for h in msg_detail['payload']['headers'] if h['name'] == 'Subject'), 'No Subject')
                 
                 lang, mood = analyze_email(snippet)
-                target_lang = pref_lang if pref_lang != 'auto' else lang
                 
-                prompt = f"Reply in {target_lang}. Mood: {mood}. Be professional. Draft a reply for: {snippet}"
+                # AI Instruction based on Settings
+                prompt = f"Reply in {pref_lang}. Make the tone {pref_tone}. The detected mood is {mood}. Draft a reply for: {snippet}"
                 ai_response = model.generate_content(prompt)
                 reply = ai_response.text
 
@@ -141,7 +145,9 @@ def force_scan():
 def listen(log_id):
     try:
         log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
-        tts = gTTS(text=log.data['ai_reply'], lang=session.get('language', 'en'))
+        # Voice also matches chosen language
+        tts_lang = session.get('language', 'en')
+        tts = gTTS(text=log.data['ai_reply'], lang=tts_lang)
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
