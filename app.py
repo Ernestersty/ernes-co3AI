@@ -157,12 +157,22 @@ def listen(log_id):
 
 @app.route('/login')
 def login():
-    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES)
-    flow.redirect_uri = PROD_REDIRECT
-    url, state = flow.authorization_url(access_type='offline', prompt='consent')
-    session['state'] = state
-    return redirect(url)
+    # As requested: using redirect_uri inside the Flow config
+    flow = Flow.from_client_config(
+        CLIENT_CONFIG,
+        scopes=SCOPES,
+        redirect_uri=PROD_REDIRECT
+    )
 
+    # Added prompt='consent' to ensure we always get a refresh_token for the background scanner
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true',
+        prompt='consent' 
+    )
+
+    session['state'] = state
+    return redirect(authorization_url)
 @app.route('/callback')
 def callback():
     flow = Flow.from_client_config(
