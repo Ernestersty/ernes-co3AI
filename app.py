@@ -167,21 +167,19 @@ def login():
 def callback():
     flow = Flow.from_client_config(
         CLIENT_CONFIG,
-        scopes=SCOPES,
-        state=session.get('state')
+        scopes=SCOPES
     )
+
     flow.redirect_uri = PROD_REDIRECT
 
     flow.fetch_token(
-        authorization_response=request.url.replace('http:', 'https:')
+        authorization_response=request.url.replace("http:", "https:")
     )
 
     creds = flow.credentials
 
     user_info = build(
-        'oauth2',
-        'v2',
-        credentials=creds
+        "oauth2", "v2", credentials=creds
     ).userinfo().get().execute()
 
     supabase.table("profiles").upsert(
@@ -195,7 +193,9 @@ def callback():
     ).execute()
 
     session['logged_in'] = True
-    return redirect(url_for('index'))
+    return redirect(url_for("index"))
+       
+   
 @app.route('/logout')
 def logout():
     session.clear()
