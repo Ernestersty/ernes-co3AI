@@ -1,16 +1,16 @@
 import os
+import io
 from flask import Flask, render_template, redirect, url_for, session, request, send_file
 from dotenv import load_dotenv
 from supabase import create_client
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
-import openai
+import google.generativeai as genai  # <--- Changed from openai
 from apscheduler.schedulers.background import BackgroundScheduler
 from textblob import TextBlob
 from langdetect import detect
 from gtts import gTTS
-import io
 
 load_dotenv()
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
@@ -20,7 +20,10 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY")
 
 # Clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
+# Configure Gemini Brain
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+model = genai.GenerativeModel('gemini-1.5-flash')
 
 SCOPES = ['https://www.googleapis.com/auth/gmail.modify', 'https://www.googleapis.com/auth/userinfo.email', 'openid']
 CLIENT_CONFIG = {"web": {"client_id": os.getenv("GOOGLE_CLIENT_ID"), "client_secret": os.getenv("GOOGLE_CLIENT_SECRET"), "auth_uri": "https://accounts.google.com/o/oauth2/auth", "token_uri": "https://oauth2.googleapis.com/token"}}
@@ -36,7 +39,7 @@ def analyze_email(text):
         return "en", "Neutral"
 
 def scan_inboxes_and_reply():
-    print("🤖 ERNESCO AI: Scanning...")
+    print("🤖 ERNESCO AI: Scanning with Gemini...")
     try:
         users = supabase.table("profiles").select("*").execute()
         for user in users.data:
@@ -53,12 +56,10 @@ def scan_inboxes_and_reply():
                 
                 lang, mood = analyze_email(snippet)
                 
-                ai_response = client.chat.completions.create(
-                    model="gpt-4o",
-                    messages=[{"role": "system", "content": f"Reply in {lang}. Mood: {mood}. Be professional."},
-                              {"role": "user", "content": snippet}]
-                )
-                reply = ai_response.choices[0].message.content
+                # Gemini replaces OpenAI here
+                prompt = f"Reply in {lang}. Mood: {mood}. Be professional: {snippet}"
+                ai_response = model.generate_content(prompt)
+                reply = ai_response.text
 
                 supabase.table("activity_logs").insert({
                     "email": user['email'], "subject": subject, 
@@ -73,6 +74,7 @@ scheduler = BackgroundScheduler()
 scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", seconds=90)
 scheduler.start()
 
+# ... (rest of your routes remain the same)
 @app.route('/')
 def index():
     emails = []
