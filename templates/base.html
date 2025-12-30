@@ -6,28 +6,82 @@
     <title>{% block title %}ERNESCO{% endblock %}</title>
     <style>
         :root { 
-            --apple-blue: #0071e3; 
-            --apple-text: #1d1d1f; 
-            --apple-gray: #86868b; 
-            --apple-bg: #f5f5f7; 
-            --white: #ffffff;
+            --dark-bg: #1a1a1c;
+            --card-bg: #252529;
+            --border-color: #333336;
+            --text-main: #ffffff;
+            --text-dim: #a1a1a6;
+            --apple-blue: #0071e3;
+            --glow-blue: #58a6ff;
+            --accent-orange: #ff9500;
         }
+
         body { 
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background: var(--apple-bg); color: var(--apple-text); margin: 0; 
-            display: flex; flex-direction: column; align-items: center; -webkit-font-smoothing: antialiased;
+            background-color: var(--dark-bg); 
+            color: var(--text-main); 
+            margin: 0; 
+            -webkit-font-smoothing: antialiased;
         }
+
+        /* Navigation Bar */
         nav { 
-            width: 100%; background: rgba(255, 255, 255, 0.72); backdrop-filter: saturate(180%) blur(20px); 
-            border-bottom: 1px solid rgba(0,0,0,0.1); padding: 16px 0; display: flex; 
-            justify-content: center; gap: 30px; position: sticky; top: 0; z-index: 1000; 
+            width: 100%; 
+            background: rgba(26, 26, 28, 0.8); 
+            backdrop-filter: blur(20px); 
+            border-bottom: 1px solid var(--border-color); 
+            padding: 16px 0; 
+            display: flex; 
+            justify-content: center; 
+            gap: 30px; 
+            position: sticky; 
+            top: 0; 
+            z-index: 1000; 
         }
-        nav a { text-decoration: none; color: var(--apple-text); font-size: 13px; opacity: 0.8; transition: opacity 0.2s; }
-        nav a:hover { opacity: 1; color: var(--apple-blue); }
-        .container { width: 90%; max-width: 600px; margin: 40px auto; text-align: center; }
-        /* Common Styles for all pages */
-        .card { background: var(--white); border-radius: 24px; padding: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid rgba(0,0,0,0.05); margin-bottom: 20px;}
-        h1 { font-size: 32px; font-weight: 700; letter-spacing: -0.03em; margin-bottom: 10px; }
+
+        nav a { 
+            text-decoration: none; 
+            color: var(--text-dim); 
+            font-size: 13px; 
+            font-weight: 500;
+            transition: color 0.2s; 
+        }
+
+        nav a:hover { color: var(--text-main); }
+        
+        /* The Force Scan Button */
+        .force-scan-btn { 
+            color: var(--accent-orange) !important; 
+            font-weight: 700 !important;
+            text-shadow: 0 0 10px rgba(255, 149, 0, 0.3);
+        }
+
+        /* Standard Container */
+        .container { 
+            width: 90%; 
+            max-width: 700px; 
+            margin: 40px auto; 
+        }
+
+        /* Global Card Style */
+        .card { 
+            background: var(--card-bg); 
+            border-radius: 20px; 
+            padding: 30px; 
+            border: 1px solid var(--border-color); 
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        h1 { 
+            font-size: 34px; 
+            font-weight: 700; 
+            letter-spacing: -0.03em; 
+            margin-bottom: 20px; 
+        }
+
+        /* Link highlighting for current page */
+        .active-nav { color: var(--text-main); font-weight: 700; }
     </style>
 </head>
 <body>
@@ -36,6 +90,7 @@
         <a href="{{ url_for('connect_email') }}">Connect</a>
         <a href="{{ url_for('pending_actions') }}">Pending</a>
         <a href="{{ url_for('settings') }}">Settings</a>
+        <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ Force Scan</a>
     </nav>
 
     <div class="container">
@@ -43,3 +98,4 @@
     </div>
 </body>
 </html>
+       
