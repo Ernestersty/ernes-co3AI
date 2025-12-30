@@ -55,30 +55,34 @@
         .email-card { background: var(--white); border-radius: 20px; padding: 24px; margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
         .ai-draft-tag { background: #eef6ff; color: var(--apple-blue); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
 
-        /* Success Pulse Indicator */
         .status-badge { display: inline-flex; align-items: center; gap: 8px; background: #eafbea; color: #1a7d1a; padding: 8px 16px; border-radius: 100px; font-size: 14px; font-weight: 600; }
         .dot { width: 8px; height: 8px; background: #1a7d1a; border-radius: 50%; animation: pulse 2s infinite; }
         @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        .listen-btn { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600; }
+        .listen-btn { display: inline-block; margin-top: 10px; font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 600; margin-right: 15px; }
+        
+        .action-link { font-size: 13px; color: var(--apple-blue); text-decoration: none; font-weight: 500; }
+        .action-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <nav>
-        <a href="/">Connect</a>
-        <a href="#">Inbox</a>
-        <a href="#">Activity</a>
+        <a href="/">Dashboard</a>
+        {% if logged_in %}
+            <a href="/force-scan" style="color: var(--apple-blue); font-weight: 600;">⚡ Force Scan</a>
+            <a href="/download-report">📄 Download PDF</a>
+        {% endif %}
     </nav>
 
     <div class="container">
         <img src="https://rlmbiftjqfwjfiplycud.supabase.co/storage/v1/object/public/assets/Gemini_Generated_Image_63py1f63py1f63py.png" class="brand-logo" alt="Logo">
         <h1>ERNESCO</h1>
-        <p class="subtitle">AI Intelligence for your Workspace.</p>
+        <p class="subtitle">AI Intelligence with Google Gemini.</p>
 
         <div class="card">
             {% if not logged_in %}
-                <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow ERNESCO to manage your drafts.</p>
+                <p style="margin-bottom: 24px; font-size: 15px;">Connect your Gmail to allow Gemini to manage your drafts.</p>
                 <a href="/login" class="google-btn">
                     <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google">
                     <span>Continue with Google</span>
@@ -86,9 +90,12 @@
             {% else %}
                 <div class="status-badge">
                     <span class="dot"></span>
-                    ERNESCO is Connected & Scanning
+                    Gemini is Active & Scanning
                 </div>
-                <p style="margin-top: 15px;"><a href="/logout" style="color: var(--apple-gray); font-size: 13px;">Disconnect Account</a></p>
+                <div style="margin-top: 20px;">
+                    <a href="/download-report" class="action-link" style="margin-right: 20px;">Download Full PDF Report</a>
+                    <a href="/logout" style="color: var(--apple-gray); font-size: 13px; text-decoration: none;">Disconnect Account</a>
+                </div>
             {% endif %}
         </div>
 
@@ -102,7 +109,9 @@
                     <span class="ai-draft-tag">{{ email.status }}</span>
                 </div>
                 <p style="color: var(--apple-gray); font-size: 14px; line-height: 1.5; margin-top: 10px;">{{ email.ai_reply }}</p>
-                <a href="/listen/{{ email.id }}" target="_blank" class="listen-btn">🔊 Listen to AI Voice</a>
+                <div style="margin-top: 10px;">
+                    <a href="/listen/{{ email.id }}" target="_blank" class="listen-btn">🔊 Listen to AI Voice</a>
+                </div>
             </div>
             {% endfor %}
         </div>
