@@ -24,36 +24,52 @@
         <div class="preview-body">
             <p><strong>From:</strong> Potential Client</p>
             <p><strong>Subject:</strong> Inquiry about services</p>
-            <div class="ai-typing">ERNESCO is drafting a reply in {{ t.dash }}...</div>
+            <div class="ai-typing">ERNESCO is drafting a reply...</div>
         </div>
     </div>
 
     {% else %}
     <div class="dashboard-header">
-        <h1>Welcome back, <span class="glow-text">User</span></h1>
+        <h1>{{ t.dash }}, <span class="glow-text">User</span></h1>
         <div class="status-indicator">
             <span class="pulse-dot"></span> AI Scanner: Active
         </div>
     </div>
 
     <div class="activity-feed">
-        <h3 class="section-title">Recent Activity</h3>
+        <div class="feed-header">
+            <h3 class="section-title">Recent Scan Logs (Latest 10)</h3>
+            <a href="{{ url_for('force_scan') }}" class="mini-scan-btn">⚡ {{ t.scan }}</a>
+        </div>
+
         {% if emails %}
             {% for email in emails %}
             <div class="card email-card">
                 <div class="email-info">
-                    <span class="email-subj">{{ email.subject }}</span>
+                    <div class="subj-group">
+                        {% if 'Positive' in email.status %}
+                            <span class="mood-badge pos"></span>
+                        {% elif 'Negative' in email.status %}
+                            <span class="mood-badge neg"></span>
+                        {% else %}
+                            <span class="mood-badge neu"></span>
+                        {% endif %}
+                        <span class="email-subj">{{ email.subject }}</span>
+                    </div>
                     <span class="email-status">{{ email.status }}</span>
                 </div>
-                <div class="email-preview">{{ email.ai_reply[:120] }}...</div>
+                <div class="email-preview">"{{ email.ai_reply[:180] }}..."</div>
                 <div class="card-actions">
-                    <a href="{{ url_for('listen', log_id=email.id) }}" class="listen-btn">🔊 Listen to AI Voice</a>
+                    <button onclick="playAudio('{{ email.id }}')" class="listen-btn" id="btn-{{ email.id }}">
+                        <span>🔊</span> Listen to AI Voice
+                    </button>
+                    <audio id="audio-{{ email.id }}" src="{{ url_for('listen', log_id=email.id) }}"></audio>
                 </div>
             </div>
             {% endfor %}
         {% else %}
             <div class="card empty-state">
-                <p>No activity yet. Gemini is waiting for your next email! 🤖</p>
+                <p>No activity yet. Gemini is fetching your latest 10 emails now... 🤖</p>
             </div>
         {% endif %}
     </div>
@@ -61,43 +77,46 @@
 
 </div>
 
+<script>
+    function playAudio(id) {
+        const audio = document.getElementById('audio-' + id);
+        const btn = document.getElementById('btn-' + id);
+        if (audio.paused) {
+            audio.play();
+            btn.innerHTML = "<span>⏸</span> Playing...";
+        } else {
+            audio.pause();
+            btn.innerHTML = "<span>🔊</span> Listen to AI Voice";
+        }
+        audio.onended = () => { btn.innerHTML = "<span>🔊</span> Listen to AI Voice"; };
+    }
+</script>
+
 <style>
-    .home-container { text-align: center; animation: fadeIn 0.8s ease; }
-    
-    /* Hero Section */
+    .home-container { text-align: center; animation: fadeIn 0.8s ease; max-width: 800px; margin: 0 auto; }
     .hero-section { padding: 60px 0; }
-    .ai-badge { background: rgba(88, 166, 255, 0.1); color: var(--glow-blue); padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 20px; border: 1px solid rgba(88, 166, 255, 0.3); }
+    .ai-badge { background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 20px; border: 1px solid rgba(88, 166, 255, 0.3); }
     .hero-title { font-size: 56px; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
-    .hero-subtitle { color: var(--text-dim); font-size: 18px; max-width: 500px; margin: 0 auto 40px; line-height: 1.6; }
     .glow-text { background: linear-gradient(90deg, #58a6ff, #34c759); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-
-    /* Buttons */
-    .cta-button { background: var(--text-main); color: var(--dark-bg); padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; transition: transform 0.2s; display: inline-block; }
-    .cta-button:hover { transform: scale(1.05); }
-    .secondary-button { color: var(--text-main); margin-left: 20px; text-decoration: none; font-weight: 600; font-size: 15px; }
-
-    /* Preview Card */
-    .preview-card { max-width: 500px; margin: 40px auto; text-align: left; background: #000; border: 1px solid #333; }
-    .preview-header { padding-bottom: 15px; border-bottom: 1px solid #222; margin-bottom: 15px; display: flex; align-items: center; }
-    .dot { width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-    .red { background: #ff5f56; } .yellow { background: #ffbd2e; } .green { background: #27c93f; }
-    .preview-label { font-size: 11px; color: #555; margin-left: 10px; text-transform: uppercase; font-weight: 800; }
-    .ai-typing { color: var(--glow-blue); font-family: monospace; margin-top: 15px; }
-
-    /* Dashboard Styles */
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; text-align: left; }
-    .status-indicator { font-size: 13px; color: var(--text-dim); display: flex; align-items: center; }
-    .pulse-dot { height: 8px; width: 8px; background: #34c759; border-radius: 50%; display: inline-block; margin-right: 10px; box-shadow: 0 0 8px #34c759; animation: pulse 2s infinite; }
     
-    .section-title { text-align: left; font-size: 20px; margin-bottom: 20px; }
-    .email-card { text-align: left; padding: 20px; transition: 0.3s; }
-    .email-card:hover { border-color: var(--glow-blue); }
-    .email-info { display: flex; justify-content: space-between; margin-bottom: 10px; }
-    .email-subj { font-weight: 700; font-size: 17px; }
-    .email-status { font-size: 12px; color: var(--glow-blue); background: rgba(88, 166, 255, 0.1); padding: 2px 8px; border-radius: 4px; }
-    .email-preview { color: var(--text-dim); font-size: 14px; margin-bottom: 15px; line-height: 1.5; }
-    .listen-btn { color: var(--text-main); text-decoration: none; font-size: 13px; font-weight: 600; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .mini-scan-btn { font-size: 12px; text-decoration: none; color: #58a6ff; border: 1px solid #58a6ff; padding: 4px 12px; border-radius: 6px; }
 
+    .email-card { text-align: left; padding: 20px; margin-bottom: 15px; border: 1px solid #333; position: relative; }
+    .subj-group { display: flex; align-items: center; gap: 10px; }
+    .mood-badge { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .pos { background: #34c759; box-shadow: 0 0 8px #34c759; }
+    .neg { background: #ff5f56; box-shadow: 0 0 8px #ff5f56; }
+    .neu { background: #a1a1a6; }
+
+    .email-subj { font-weight: 600; font-size: 16px; color: #fff; }
+    .email-status { font-size: 11px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #a1a1a6; }
+    .email-preview { color: #a1a1a6; font-size: 14px; margin: 12px 0; font-style: italic; line-height: 1.4; }
+    
+    .listen-btn { background: none; border: 1px solid #444; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: 0.2s; }
+    .listen-btn:hover { background: #333; border-color: #58a6ff; }
+    
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
