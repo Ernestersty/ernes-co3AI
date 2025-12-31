@@ -3,160 +3,48 @@
 
 {% block content %}
 <div class="pending-container">
-    <h1 class="page-title">Pending Actions</h1>
+    <h1 class="page-title">{{ t.pend }}</h1>
 
     <div class="status-hero">
         <div class="hero-layout">
             <div class="stat-box">
                 <span class="stat-value">{{ count }}</span>
-                <span class="stat-label">In Queue</span>
+                <span class="stat-label">Total Logs</span>
             </div>
             
             <div class="progress-section">
-                <p class="section-tag">Status Hero</p>
+                <p class="section-tag">AI Analysis Progress</p>
                 <div class="progress-track">
                     <div class="progress-fill" style="width: {{ percentage }}%;"></div>
                 </div>
-                <p class="progress-text">{{ percentage }}% of queue complete</p>
+                <p class="progress-text">System is {{ percentage }}% Optimized</p>
             </div>
 
             <div class="stat-box">
                 <span class="stat-value active-text">{{ working_on }}</span>
-                <span class="stat-label">Active</span>
+                <span class="stat-label">Currently Scanning</span>
             </div>
         </div>
     </div>
 
     <div class="action-list">
-        {% for email in emails %}
-        <div class="action-item">
-            <span class="item-subject">{{ email.subject }}</span>
-            <div class="thinking-pill">
-                <span>Thinking...</span>
-                <div class="spinner-icon"></div>
+        <h3 class="section-title">Background Processor</h3>
+        {% if emails %}
+            {% for email in emails %}
+            <div class="action-item">
+                <span class="item-subject">{{ email.subject }}</span>
+                <div class="thinking-pill">
+                    <span>Processing...</span>
+                    <div class="spinner-icon"></div>
+                </div>
             </div>
-        </div>
-        {% endfor %}
-
-        {% if not emails %}
-        <div class="empty-card">
-            <p>No older actions. Your inbox is clear. 🌿</p>
-        </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-card">
+                <p>No unread emails in the last scan. Your inbox is clear. 🌿</p>
+                <a href="{{ url_for('force_scan') }}" style="color: #58a6ff; font-size: 13px; text-decoration: none;">Run Manual Check →</a>
+            </div>
         {% endif %}
     </div>
 </div>
-
-<style>
-    /* Dark Aesthetic Theme */
-    :root {
-        --dark-surface: #1a1a1c;
-        --card-surface: #252529;
-        --border-subtle: #333336;
-        --text-bright: #ffffff;
-        --text-muted: #a1a1a6;
-        --green-accent: #34c759;
-        --blue-glow: #58a6ff;
-    }
-
-    .pending-container {
-        max-width: 700px;
-        margin: 0 auto;
-        text-align: left;
-        color: var(--text-bright);
-    }
-
-    .page-title {
-        font-size: 34px;
-        font-weight: 700;
-        margin: 20px 0 30px 0;
-        letter-spacing: -0.8px;
-    }
-
-    /* Hero Styling */
-    .status-hero {
-        background: var(--card-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 20px;
-        padding: 30px;
-        margin-bottom: 25px;
-    }
-
-    .hero-layout {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 20px;
-    }
-
-    .stat-box { text-align: left; min-width: 80px; }
-    .stat-value { font-size: 48px; font-weight: 700; display: block; line-height: 1; }
-    .active-text { color: var(--blue-glow); text-shadow: 0 0 15px rgba(88, 166, 255, 0.3); }
-    .stat-label { font-size: 13px; color: var(--text-muted); margin-top: 5px; display: block; }
-
-    .progress-section { flex-grow: 1; text-align: center; }
-    .section-tag { font-size: 14px; font-weight: 500; color: var(--text-muted); margin: 0 0 12px 0; }
-    
-    .progress-track {
-        width: 100%;
-        background: #3a3a3c;
-        height: 12px;
-        border-radius: 10px;
-        overflow: hidden;
-        margin-bottom: 10px;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #34c759, #4cd964);
-        border-radius: 10px;
-        transition: width 1s ease-in-out;
-    }
-
-    .progress-text { font-size: 13px; color: var(--text-muted); margin: 0; }
-
-    /* List Item Styling */
-    .action-item {
-        background: var(--card-surface);
-        border: 1px solid var(--border-subtle);
-        border-radius: 15px;
-        padding: 18px 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 12px;
-    }
-
-    .item-subject { font-size: 16px; font-weight: 500; }
-
-    .thinking-pill {
-        background: #323d4d;
-        color: #add1ff;
-        padding: 8px 16px;
-        border-radius: 25px;
-        font-size: 13px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .spinner-icon {
-        width: 14px;
-        height: 14px;
-        border: 2px solid rgba(173, 209, 255, 0.2);
-        border-top: 2px solid #add1ff;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-
-    .empty-card {
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 15px;
-        padding: 40px;
-        text-align: center;
-        color: var(--text-muted);
-        border: 1px dashed var(--border-subtle);
-    }
-
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-</style>
+{% endblock %}
