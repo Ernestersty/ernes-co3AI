@@ -13,27 +13,19 @@ from textblob import TextBlob
 from langdetect import detect
 from gtts import gTTS
 
+# --- INITIALIZATION ---
 load_dotenv()
 os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 app = Flask(__name__)
-
-# 1. Enable HTTPS support for Render
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
-
-# 2. Secure Secret Key handling
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-12345")
-
-# 3. Session Security for Production
-app.config.update(
-    SESSION_COOKIE_SECURE=True,
-    SESSION_COOKIE_SAMESITE='None'
-)
+app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='None')
 
 # Clients
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-# Configure Gemini
+# 1. NEW GEMINI SDK CONFIGURATION
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
@@ -50,9 +42,9 @@ LANGUAGES = {
     'ur': {'dash': 'ڈیش بورڈ', 'conn': 'رابطہ کریں', 'pend': 'باقی عمل', 'sett': 'ترجیحات', 'scan': 'اسکین کریں', 'dir': 'rtl'},
     'ar': {'dash': 'لوحة القيادة', 'conn': 'اتصل', 'pend': 'قيد الانتظار', 'sett': 'الإعدادات', 'scan': 'فحص الآن', 'dir': 'rtl'},
     'ms': {'dash': 'Papan Pemuka', 'conn': 'Sambung', 'pend': 'Menunggu', 'sett': 'Tetapan', 'scan': 'Imbas', 'dir': 'ltr'},
-    'hi': {'dash': 'डैशボード', 'conn': 'कनेक्ट करें', 'pend': 'लंबित', 'sett': 'सेटिंग्स', 'scan': 'स्कैन करें', 'dir': 'ltr'},
+    'hi': {'dash': 'डैशबोर्ड', 'conn': 'कनेक्ट करें', 'pend': 'लंबित', 'sett': 'सेटिंग्स', 'scan': 'स्कैन करें', 'dir': 'ltr'},
     'ko': {'dash': '대시보드', 'conn': '연결', 'pend': '대기 중', 'sett': '설정', 'scan': '스캔', 'dir': 'ltr'},
-    'zh': {'dash': '仪表板', 'conn': '连接', '待办事项': 'Pending', 'sett': '设置', 'scan': '强制扫描', 'dir': 'ltr'}
+    'zh': {'dash': '仪表板', 'conn': '连接', 'pend': 'Pending', 'sett': '设置', 'scan': '强制扫描', 'dir': 'ltr'}
 }
 
 @app.context_processor
@@ -73,8 +65,9 @@ def analyze_email(text):
     except:
         return "en", "Neutral"
 
+# --- 2. ASYNCHRONOUS BACKGROUND SCANNER ---
 def scan_inboxes_and_reply():
-    print("🤖 ERNESCO AI: Scanning with Gemini...")
+    print("🤖 ERNESCO AI: Running optimized background scan...")
     try:
         users = supabase.table("profiles").select("*").execute()
         for user in users.data:
@@ -89,19 +82,9 @@ def scan_inboxes_and_reply():
             )
             
             service = build("gmail", "v1", credentials=creds)
-            
-            # Gmail list logic
-            results = service.users().messages().list(
-                userId="me",
-                labelIds=["INBOX"],
-                maxResults=10
-            ).execute()
-
+            results = service.users().messages().list(userId="me", labelIds=["INBOX"], maxResults=10).execute()
             messages = results.get("messages", [])
             
-            pref_lang = 'en'
-            pref_tone = 'professional'
-
             for msg in messages:
                 msg_detail = service.users().messages().get(userId='me', id=msg['id']).execute()
                 snippet = msg_detail.get('snippet', '')
@@ -109,10 +92,13 @@ def scan_inboxes_and_reply():
                 
                 lang, mood = analyze_email(snippet)
                 
-                # Wrapped Gemini call for safety
+                # 3. SAFE AI CALL (OPTION 1 FIX)
                 try:
-                    prompt = f"Reply in {pref_lang}. Make the tone {pref_tone}. The detected mood is {mood}. Draft a reply for: {snippet}"
-                    ai_response = model.generate_content(prompt)
+                    prompt = f"Reply in {lang}. Tone: professional. Mood: {mood}. Draft a reply for: {snippet}"
+                    ai_response = model.generate_content(
+                        prompt,
+                        generation_config=genai.types.GenerationConfig(max_output_tokens=400, temperature=0.7)
+                    )
                     reply = ai_response.text
 
                     supabase.table("activity_logs").insert({
@@ -121,29 +107,29 @@ def scan_inboxes_and_reply():
                     }).execute()
 
                     service.users().messages().batchModify(userId='me', body={'ids': [msg['id']], 'removeLabelIds': ['UNREAD']}).execute()
-                except Exception as ai_e:
-                    print(f"Gemini scan skipped/failed for message {msg['id']}: {ai_e}")
-
+                except Exception as ai_err:
+                    print(f"Gemini scan skipped/failed for user {user['email']}: {ai_err}")
     except Exception as e:
-        print(f"Error during scan: {e}")
+        print(f"Background worker error: {e}")
 
 scheduler = BackgroundScheduler()
-scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", seconds=90)
+scheduler.add_job(func=scan_inboxes_and_reply, trigger="interval", seconds=120)
 scheduler.start()
+
+# --- ROUTES ---
 
 @app.route('/')
 def index():
     emails = []
     if session.get('logged_in'):
         try:
-            emails = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(5).execute().data
+            emails = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(10).execute().data
         except: pass
     return render_template('index.html', logged_in=session.get('logged_in'), emails=emails)
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
+    if not session.get("logged_in"): return redirect(url_for("login")) # PROTECTION
     if request.method == 'POST':
         session['language'] = request.form.get('language')
         session['tone'] = request.form.get('tone')
@@ -152,63 +138,43 @@ def settings():
 
 @app.route('/pending')
 def pending_actions():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-
+    if not session.get("logged_in"): return redirect(url_for("login")) # PROTECTION
+    
     count = 0
-    working_on = 0
+    try:
+        # INSTANT FETCH: No AI calls here!
+        logs = supabase.table("activity_logs").select("*", count="exact").execute()
+        count = logs.count or 0
+    except: pass
 
-    if session.get('logged_in'):
-        try:
-            # INSTANT LOAD: Only fetching counts, no AI calls here
-            logs = supabase.table("activity_logs").select("*", count="exact").execute()
-            count = logs.count or 0
-        except Exception as e:
-            print("Pending error:", e)
-
-    percentage = int((working_on / count) * 100) if count > 0 else 0
-
-    return render_template(
-        'pending_actions.html',
-        count=count,
-        working_on=working_on,
-        percentage=percentage
-    )
-
-@app.route('/connect')
-def connect_email():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
-    return render_template('connect_email.html')
+    return render_template('pending_actions.html', count=count, working_on=0, percentage=100 if count == 0 else 0)
 
 @app.route('/force-scan')
 def force_scan():
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
+    if not session.get("logged_in"): return redirect(url_for("login"))
     scan_inboxes_and_reply()
     return redirect(url_for('index'))
 
 @app.route('/listen/<log_id>')
 def listen(log_id):
-    if not session.get("logged_in"):
-        return redirect(url_for("login"))
+    if not session.get("logged_in"): return "Unauthorized", 401
     try:
         log = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).single().execute()
-        tts_lang = session.get('language', 'en')
-        tts = gTTS(text=log.data['ai_reply'], lang=tts_lang)
+        tts = gTTS(text=log.data['ai_reply'], lang='en')
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
         return send_file(fp, mimetype='audio/mp3')
-    except:
-        return "Audio not available", 404
+    except: return "Audio error", 404
+
+# --- AUTH ---
 
 @app.route('/login')
 def login():
     flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, redirect_uri=PROD_REDIRECT)
-    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true', prompt='consent')
+    auth_url, state = flow.authorization_url(access_type='offline', prompt='consent')
     session['state'] = state
-    return redirect(authorization_url)
+    return redirect(auth_url)
 
 @app.route('/callback')
 def callback():
@@ -218,15 +184,10 @@ def callback():
     creds = flow.credentials
     user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
 
-    supabase.table("profiles").upsert(
-        {
-            "email": user_info["email"],
-            "access_token": creds.token,
-            "refresh_token": creds.refresh_token,
-            "token_expiry": creds.expiry.isoformat() if creds.expiry else None
-        },
-        on_conflict="email"
-    ).execute()
+    supabase.table("profiles").upsert({
+        "email": user_info["email"], "access_token": creds.token,
+        "refresh_token": creds.refresh_token, "token_expiry": creds.expiry.isoformat() if creds.expiry else None
+    }, on_conflict="email").execute()
 
     session["logged_in"] = True
     return redirect(url_for("index"))
