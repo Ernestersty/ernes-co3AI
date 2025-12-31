@@ -1,6 +1,7 @@
 import os
 import io
 from flask import Flask, render_template, redirect, url_for, session, request, send_file
+from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from supabase import create_client
 from google_auth_oauthlib.flow import Flow
@@ -17,10 +18,13 @@ os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
 
 app = Flask(__name__)
 
-# 1. Added safe Secret Key handling
+# 1. Enable HTTPS support for Render
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1)
+
+# 2. Secure Secret Key handling
 app.secret_key = os.environ.get("FLASK_SECRET_KEY", "dev-secret-key-12345")
 
-# 2. Added Session Security for Production/Google OAuth
+# 3. Session Security for Production
 app.config.update(
     SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_SAMESITE='None'
@@ -46,9 +50,9 @@ LANGUAGES = {
     'ur': {'dash': 'ڈیش بورڈ', 'conn': 'رابطہ کریں', 'pend': 'باقی عمل', 'sett': 'ترجیحات', 'scan': 'اسکین کریں', 'dir': 'rtl'},
     'ar': {'dash': 'لوحة القيادة', 'conn': 'اتصل', 'pend': 'قيد الانتظار', 'sett': 'الإعدادات', 'scan': 'فحص الآن', 'dir': 'rtl'},
     'ms': {'dash': 'Papan Pemuka', 'conn': 'Sambung', 'pend': 'Menunggu', 'sett': 'Tetapan', 'scan': 'Imbas', 'dir': 'ltr'},
-    'hi': {'dash': 'डैशबोर्ड', 'conn': 'कनेक्ट करें', 'pend': 'लंबित', 'sett': 'सेटिंग्स', 'scan': 'स्कैन करें', 'dir': 'ltr'},
+    'hi': {'dash': 'डैशボード', 'conn': 'कनेक्ट करें', 'pend': 'लंबित', 'sett': 'सेटिंग्स', 'scan': 'स्कैन करें', 'dir': 'ltr'},
     'ko': {'dash': '대시보드', 'conn': '연결', 'pend': '대기 중', 'sett': '설정', 'scan': '스캔', 'dir': 'ltr'},
-    'zh': {'dash': '仪表板', 'conn': '连接', 'pend': '待办事项', 'sett': '设置', 'scan': '强制扫描', 'dir': 'ltr'}
+    'zh': {'dash': '仪表板', 'conn': '连接', '待办事项': 'Pending', 'sett': '设置', 'scan': '强制扫描', 'dir': 'ltr'}
 }
 
 @app.context_processor
@@ -75,16 +79,31 @@ def scan_inboxes_and_reply():
         users = supabase.table("profiles").select("*").execute()
         for user in users.data:
             if not user.get('access_token'): continue
-            creds = Credentials(token=user['access_token'], refresh_token=user['refresh_token'], 
-                                token_uri=user['token_uri'], client_id=user['client_id'], 
-                                client_secret=user['client_secret'], scopes=SCOPES)
-            service = build('gmail', 'v1', credentials=creds)
-            results = service.users().messages().list(userId='me', q="is:unread").execute()
             
-            pref_lang = session.get('language', 'en')
-            pref_tone = session.get('tone', 'professional')
+            creds = Credentials(
+                token=user['access_token'],
+                refresh_token=user['refresh_token'],
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id=os.getenv("GOOGLE_CLIENT_ID"),
+                client_secret=os.getenv("GOOGLE_CLIENT_SECRET")
+            )
+            
+            service = build("gmail", "v1", credentials=creds)
+            
+            # --- Integrated update below ---
+            results = service.users().messages().list(
+                userId="me",
+                labelIds=["INBOX"],
+                maxResults=10
+            ).execute()
 
-            for msg in results.get('messages', []):
+            messages = results.get("messages", [])
+            # -------------------------------
+            
+            pref_lang = 'en'
+            pref_tone = 'professional'
+
+            for msg in messages:
                 msg_detail = service.users().messages().get(userId='me', id=msg['id']).execute()
                 snippet = msg_detail.get('snippet', '')
                 subject = next((h['value'] for h in msg_detail['payload']['headers'] if h['name'] == 'Subject'), 'No Subject')
@@ -159,36 +178,18 @@ def listen(log_id):
 
 @app.route('/login')
 def login():
-    flow = Flow.from_client_config(
-        CLIENT_CONFIG,
-        scopes=SCOPES,
-        redirect_uri=PROD_REDIRECT
-    )
-    authorization_url, state = flow.authorization_url(
-        access_type='offline',
-        include_granted_scopes='true',
-        prompt='consent' 
-    )
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, redirect_uri=PROD_REDIRECT)
+    authorization_url, state = flow.authorization_url(access_type='offline', include_granted_scopes='true', prompt='consent')
     session['state'] = state
     return redirect(authorization_url)
 
 @app.route('/callback')
 def callback():
-    flow = Flow.from_client_config(
-        CLIENT_CONFIG,
-        scopes=SCOPES,
-        state=session.get('state')
-    )
+    flow = Flow.from_client_config(CLIENT_CONFIG, scopes=SCOPES, state=session.get('state'))
     flow.redirect_uri = PROD_REDIRECT
     flow.fetch_token(authorization_response=request.url.replace('http:', 'https:'))
-
     creds = flow.credentials
-
-    user_info = build(
-        'oauth2',
-        'v2',
-        credentials=creds
-    ).userinfo().get().execute()
+    user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
 
     supabase.table("profiles").upsert(
         {
@@ -203,7 +204,6 @@ def callback():
     session["logged_in"] = True
     return redirect(url_for("index"))
 
-
 @app.route('/logout')
 def logout():
     session.clear()
@@ -211,3 +211,4 @@ def logout():
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.getenv('PORT', 5000)))
+   
