@@ -147,12 +147,24 @@ def settings():
 @app.route('/pending')
 def pending_actions():
     count = 0
+    working_on = 0
+
     if session.get('logged_in'):
         try:
             logs = supabase.table("activity_logs").select("*", count="exact").execute()
-            count = logs.count if logs.count else 0
-        except: pass
-    return render_template('pending_actions.html', count=count, working_on=0, percentage=100)
+            count = logs.count or 0
+        except Exception as e:
+            print("Pending error:", e)
+
+    percentage = int((working_on / count) * 100) if count > 0 else 0
+
+    return render_template(
+        'pending_actions.html',
+        count=count,
+        working_on=working_on,
+        percentage=percentage
+    )
+
 
 @app.route('/connect')
 def connect_email():
