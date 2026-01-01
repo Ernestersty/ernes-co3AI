@@ -157,14 +157,18 @@ def pending_actions():
 
     count = 0
     working_on = 0
+    emails = [] # <--- ADD THIS LINE
 
-    if session.get('logged_in'):
-        try:
-            # INSTANT LOAD: Only fetching counts, no AI calls here
-            logs = supabase.table("activity_logs").select("*", count="exact").execute()
-            count = logs.count or 0
-        except Exception as e:
-            print("Pending error:", e)
+    try:
+        # Fetching count from Supabase
+        res = supabase.table("activity_logs").select("*", count="exact").execute()
+        count = res.count or 0
+        
+        # OPTIONAL: If you want to show "Processing" items, fetch them here:
+        # emails = supabase.table("activity_logs").select("*").limit(5).execute().data
+        
+    except Exception as e:
+        print("Pending error:", e)
 
     percentage = int((working_on / count) * 100) if count > 0 else 0
 
@@ -172,9 +176,9 @@ def pending_actions():
         'pending_actions.html',
         count=count,
         working_on=working_on,
-        percentage=percentage
+        percentage=percentage,
+        emails=emails  # <--- AND ADD THIS LINE
     )
-
 @app.route('/connect')
 def connect_email():
     if not session.get("logged_in"):
