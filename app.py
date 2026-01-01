@@ -109,6 +109,33 @@ def settings():
         session['language'] = request.form.get('language', 'en')
         return redirect(url_for('settings'))
     return render_template('settings.html')
+    @app.route('/listen/<int:log_id>')
+def listen(log_id):
+    if not session.get("logged_in"):
+        return "Unauthorized", 401
+
+    try:
+        # 1. Fetch the specific log from Supabase
+        res = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).execute()
+        
+        if not res.data:
+            return "Log not found", 404
+            
+        text_to_speak = res.data[0]['ai_reply']
+
+        # 2. Generate the Audio using gTTS
+        # We use io.BytesIO to keep the audio in memory (fast, no temp files needed)
+        tts = gTTS(text=text_to_speak, lang=session.get('language', 'en'))
+        fp = io.BytesIO()
+        tts.write_to_fp(fp)
+        fp.seek(0)
+
+        # 3. Stream the file back as an MP3
+        return send_file(fp, mimetype='audio/mpeg')
+
+    except Exception as e:
+        print(f"Voice Error: {e}")
+        return "Audio generation failed", 500
 
 @app.route('/login')
 def login():
