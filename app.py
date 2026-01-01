@@ -1,6 +1,6 @@
 import os
 import io
-from flask import Flask, render_template, redirect, url_for, session, request, send_file
+from flask import Flask, render_template, redirect, url_for, session, request, send_file, flash
 from werkzeug.middleware.proxy_fix import ProxyFix
 from dotenv import load_dotenv
 from supabase import create_client
@@ -9,8 +9,6 @@ from googleapiclient.discovery import build
 from google.oauth2.credentials import Credentials
 import google.generativeai as genai
 from apscheduler.schedulers.background import BackgroundScheduler
-from textblob import TextBlob
-from langdetect import detect
 from gtts import gTTS
 
 load_dotenv()
@@ -23,11 +21,9 @@ app.config.update(SESSION_COOKIE_SECURE=True, SESSION_COOKIE_SAMESITE='None')
 
 supabase = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
-# FIXED: Explicit model naming to prevent the 404 error found in your logs
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 model = genai.GenerativeModel('gemini-1.5-flash')
 
-# ALL LANGUAGES RESTORED (Including Spanish, Dutch, Zulu, Russian, Italian, Urdu, Bahasa, Korean)
 LANGUAGES = {
     'en': {'dash': 'Dashboard', 'conn': 'Connect', 'pend': 'Pending', 'sett': 'Settings', 'scan': 'Force Scan', 'dir': 'ltr'},
     'sw': {'dash': 'Dashibodi', 'conn': 'Unganisha', 'pend': 'Inasubiri', 'sett': 'Mipangilio', 'scan': 'Anza Sasa', 'dir': 'ltr'},
@@ -39,7 +35,7 @@ LANGUAGES = {
     'nl': {'dash': 'Dashboard', 'conn': 'Verbinden', 'pend': 'In afwachting', 'sett': 'Instellingen', 'scan': 'Nu scannen', 'dir': 'ltr'},
     'zu': {'dash': 'Ideshibhodi', 'conn': 'Xhuma', 'pend': 'Isalindile', 'sett': 'Izilungiselelo', 'scan': 'Skena Manje', 'dir': 'ltr'},
     'ru': {'dash': 'Панель', 'conn': 'Подключить', 'pend': 'Ожидание', 'sett': 'Настройки', 'scan': 'Сканировать', 'dir': 'ltr'},
-    'it': {'dash': 'Dashboard', 'conn': 'Connetti', 'pend': 'In attesa', 'sett': 'Impostazioni', 'scan': 'Scansiona', 'dir': 'ltr'},
+    'it': {'dash': 'Dashboard', 'conn': 'Connetti', 'pend': 'Impostazioni', 'scan': 'Scansiona', 'dir': 'ltr'},
     'ur': {'dash': 'ڈیش بورڈ', 'conn': 'منسلک کریں', 'pend': 'زیر التوا', 'sett': 'ترجیحات', 'scan': 'فوری اسکین', 'dir': 'rtl'},
     'ms': {'dash': 'Papan Pemuka', 'conn': 'Sambung', 'pend': 'Menunggu', 'sett': 'Tetapan', 'scan': 'Imbas Sekarang', 'dir': 'ltr'},
     'ko': {'dash': '대시보드', 'conn': '연결', 'pend': '대기 중', 'sett': '설정', 'scan': '지금 스캔', 'dir': 'ltr'}
@@ -59,18 +55,33 @@ def scan_inboxes_and_reply():
         users = supabase.table("profiles").select("*").execute()
         for user in users.data:
             if not user.get('access_token'): continue
+            
+            # Fetch user-specific settings for the AI
+            lang = user.get('language', 'en')
+            tone = user.get('tone', 'professional')
+            
             creds = Credentials(token=user['access_token'], refresh_token=user['refresh_token'], 
                                 token_uri="https://oauth2.googleapis.com/token", 
                                 client_id=os.getenv("GOOGLE_CLIENT_ID"), 
                                 client_secret=os.getenv("GOOGLE_CLIENT_SECRET"))
             service = build("gmail", "v1", credentials=creds)
             results = service.users().messages().list(userId="me", labelIds=["INBOX"], maxResults=5).execute()
+            
             for msg in results.get("messages", []):
                 try:
                     m = service.users().messages().get(userId='me', id=msg['id']).execute()
                     snippet = m.get('snippet', '')
-                    response = model.generate_content(f"Draft a short professional reply: {snippet}")
-                    supabase.table("activity_logs").insert({"email": user['email'], "subject": "Auto-Reply", "ai_reply": response.text, "status": "Processed"}).execute()
+                    
+                    # AI Prompt updated with Language and Tone
+                    prompt = f"Draft a short {tone} reply in {lang}: {snippet}"
+                    response = model.generate_content(prompt)
+                    
+                    supabase.table("activity_logs").insert({
+                        "email": user['email'], 
+                        "subject": "Auto-Reply", 
+                        "ai_reply": response.text, 
+                        "status": f"Processed ({tone})"
+                    }).execute()
                 except Exception as e: print(f"Msg error: {e}")
     except Exception as e: print(f"Global error: {e}")
 
@@ -82,11 +93,10 @@ scheduler.start()
 def index():
     emails = []
     if session.get('logged_in'):
-        try: emails = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(5).execute().data
+        try: emails = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(10).execute().data
         except: pass
     return render_template('index.html', logged_in=session.get('logged_in'), emails=emails)
 
-# FIXED: Added back the connect_email route to fix the BuildError from your logs
 @app.route('/connect')
 def connect_email():
     if not session.get("logged_in"): return redirect(url_for("login"))
@@ -95,47 +105,44 @@ def connect_email():
 @app.route('/pending')
 def pending_actions():
     if not session.get("logged_in"): return redirect(url_for("login"))
-    count = 0
+    count, emails = 0, []
     try:
         res = supabase.table("activity_logs").select("*", count="exact").execute()
         count = res.count or 0
+        emails = res.data[:5] # Showing latest 5 in processor
     except: pass
-    return render_template('pending_actions.html', count=count, working_on=0, percentage=0, emails=[])
+    return render_template('pending_actions.html', count=count, working_on=len(emails), percentage=75, emails=emails)
 
 @app.route('/settings', methods=['GET', 'POST'])
 def settings():
     if not session.get("logged_in"): return redirect(url_for("login"))
     if request.method == 'POST':
-        session['language'] = request.form.get('language', 'en')
+        lang = request.form.get('language', 'en')
+        tone = request.form.get('tone', 'professional')
+        session['language'] = lang
+        session['tone'] = tone
+        
+        # Update Database
+        try:
+            supabase.table("profiles").update({"language": lang, "tone": tone}).eq("email", session.get("user_email")).execute()
+            flash("Preferences Saved!", "success")
+        except: pass
+        
         return redirect(url_for('settings'))
     return render_template('settings.html')
-    @app.route('/listen/<int:log_id>')
+
+@app.route('/listen/<int:log_id>')
 def listen(log_id):
-    if not session.get("logged_in"):
-        return "Unauthorized", 401
-
+    if not session.get("logged_in"): return "Unauthorized", 401
     try:
-        # 1. Fetch the specific log from Supabase
         res = supabase.table("activity_logs").select("ai_reply").eq("id", log_id).execute()
-        
-        if not res.data:
-            return "Log not found", 404
-            
-        text_to_speak = res.data[0]['ai_reply']
-
-        # 2. Generate the Audio using gTTS
-        # We use io.BytesIO to keep the audio in memory (fast, no temp files needed)
-        tts = gTTS(text=text_to_speak, lang=session.get('language', 'en'))
+        if not res.data: return "Log not found", 404
+        tts = gTTS(text=res.data[0]['ai_reply'], lang=session.get('language', 'en'))
         fp = io.BytesIO()
         tts.write_to_fp(fp)
         fp.seek(0)
-
-        # 3. Stream the file back as an MP3
         return send_file(fp, mimetype='audio/mpeg')
-
-    except Exception as e:
-        print(f"Voice Error: {e}")
-        return "Audio generation failed", 500
+    except Exception as e: return f"Error: {e}", 500
 
 @app.route('/login')
 def login():
@@ -152,6 +159,7 @@ def callback():
         flow.fetch_token(authorization_response=request.url.replace('http:', 'https:'))
         creds = flow.credentials
         user_info = build('oauth2', 'v2', credentials=creds).userinfo().get().execute()
+        session["user_email"] = user_info["email"]
         supabase.table("profiles").upsert({"email": user_info["email"], "access_token": creds.token, "refresh_token": creds.refresh_token}, on_conflict="email").execute()
         session["logged_in"] = True
         return redirect(url_for("index"))
@@ -165,6 +173,7 @@ def logout():
 @app.route('/force-scan')
 def force_scan():
     scan_inboxes_and_reply()
+    flash("Manual Scan Complete", "success")
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
