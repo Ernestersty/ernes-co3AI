@@ -1,50 +1,91 @@
 {% extends "base.html" %}
+
+{% block title %}Settings | ERNESCO AI{% endblock %}
+
 {% block content %}
-<div class="settings-container">
-    <h1>{{ t.sett }}</h1>
+<div class="max-w-2xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease]">
+    
+    <div class="mb-8">
+        <h1 class="text-3xl font-black text-white tracking-tight">{{ t.sett }}</h1>
+        <p class="text-slate-400 text-sm mt-1">Customize how ERNESCO interacts with your emails.</p>
+    </div>
 
-    <form action="{{ url_for('settings') }}" method="POST">
-        <div class="card">
-            <label style="font-weight: 600; display: block; margin-bottom: 10px;">App Language</label>
-            <select name="language" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid var(--border-color); background: #1c1c1e; color: white;">
-                <option value="en" {% if session.language == 'en' %}selected{% endif %}>English</option>
-                <option value="sw" {% if session.language == 'sw' %}selected{% endif %}>Kiswahili</option>
-                <option value="fr" {% if session.language == 'fr' %}selected{% endif %}>Français</option>
-                <option value="es" {% if session.language == 'es' %}selected{% endif %}>Español</option>
-                <option value="de" {% if session.language == 'de' %}selected{% endif %}>Deutsch</option>
-                <option value="zu" {% if session.language == 'zu' %}selected{% endif %}>isiZulu</option>
-                <option value="ru" {% if session.language == 'ru' %}selected{% endif %}>Русский</option>
-                <option value="it" {% if session.language == 'it' %}selected{% endif %}>Italiano</option>
-                <option value="ur" {% if session.language == 'ur' %}selected{% endif %}>اردو (Urdu)</option>
-                <option value="ar" {% if session.language == 'ar' %}selected{% endif %}>العربية (Arabic)</option>
-                <option value="ms" {% if session.language == 'ms' %}selected{% endif %}>Bahasa Melayu</option>
-                <option value="hi" {% if session.language == 'hi' %}selected{% endif %}>हिन्दी (Hindi)</option>
-                <option value="ko" {% if session.language == 'ko' %}selected{% endif %}>한국어</option>
-                <option value="zh" {% if session.language == 'zh' %}selected{% endif %}>中文 (Chinese)</option>
-            </select>
-
-            <label style="font-weight: 600; display: block; margin-top: 25px; margin-bottom: 10px;">Response Tone</label>
-            <input type="hidden" name="tone" id="toneInput" value="{{ session.get('tone', 'professional') }}">
-            <div style="display: flex; background: #1c1c1e; padding: 4px; border-radius: 10px; gap: 5px;">
-                <button type="button" class="tone-btn {% if session.get('tone') != 'friendly' %}active{% endif %}" onclick="setTone('professional', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Professional</button>
-                <button type="button" class="tone-btn {% if session.get('tone') == 'friendly' %}active{% endif %}" onclick="setTone('friendly', this)" style="flex: 1; border: none; padding: 10px; border-radius: 8px; cursor: pointer; color: white;">Friendly</button>
+    <form action="{{ url_for('settings') }}" method="POST" class="space-y-6">
+        <div class="bg-[#1e293b] p-8 rounded-3xl shadow-2xl border border-slate-700 space-y-8">
+            
+            <div class="space-y-4">
+                <label class="flex items-center gap-2 text-sm font-bold text-slate-300 uppercase tracking-widest">
+                    <i class="fas fa-globe-americas text-blue-400"></i> App Language
+                </label>
+                <div class="relative">
+                    <select name="language" class="w-full bg-[#0f172a] border border-slate-700 text-slate-200 text-sm rounded-2xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block p-4 appearance-none cursor-pointer transition-all hover:border-slate-500">
+                        <option value="en" {% if session.language == 'en' %}selected{% endif %}>🇺🇸 English</option>
+                        <option value="sw" {% if session.language == 'sw' %}selected{% endif %}>🇹🇿 Kiswahili</option>
+                        <option value="fr" {% if session.language == 'fr' %}selected{% endif %}>🇫🇷 Français</option>
+                        <option value="es" {% if session.language == 'es' %}selected{% endif %}>🇪🇸 Español</option>
+                        <option value="de" {% if session.language == 'de' %}selected{% endif %}>🇩🇪 Deutsch</option>
+                        <option value="zu" {% if session.language == 'zu' %}selected{% endif %}>🇿🇦 isiZulu</option>
+                        <option value="ru" {% if session.language == 'ru' %}selected{% endif %}>🇷🇺 Русский</option>
+                        <option value="it" {% if session.language == 'it' %}selected{% endif %}>🇮🇹 Italiano</option>
+                        <option value="ur" {% if session.language == 'ur' %}selected{% endif %}>🇵🇰 اردو (Urdu)</option>
+                        <option value="ar" {% if session.language == 'ar' %}selected{% endif %}>🇸🇦 العربية (Arabic)</option>
+                        <option value="ms" {% if session.language == 'ms' %}selected{% endif %}>🇲🇾 Bahasa Melayu</option>
+                        <option value="hi" {% if session.language == 'hi' %}selected{% endif %}>🇮🇳 हिन्दी (Hindi)</option>
+                        <option value="ko" {% if session.language == 'ko' %}selected{% endif %}>🇰🇷 한국어</option>
+                        <option value="zh" {% if session.language == 'zh' %}selected{% endif %}>🇨🇳 中文 (Chinese)</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-500">
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </div>
+                </div>
             </div>
 
-            <button type="submit" style="width: 100%; margin-top: 30px; background: var(--apple-blue); color: white; border: none; padding: 15px; border-radius: 12px; font-weight: 600; cursor: pointer;">Save Changes</button>
+            <div class="space-y-4">
+                <label class="flex items-center gap-2 text-sm font-bold text-slate-300 uppercase tracking-widest">
+                    <i class="fas fa-comment-dots text-emerald-400"></i> Response Tone
+                </label>
+                <input type="hidden" name="tone" id="toneInput" value="{{ session.get('tone', 'professional') }}">
+                
+                <div class="grid grid-cols-2 bg-[#0f172a] p-1.5 rounded-2xl border border-slate-800 gap-2">
+                    <button type="button" 
+                            id="btn-professional"
+                            onclick="setTone('professional', this)" 
+                            class="tone-btn py-3 px-4 rounded-xl text-sm font-bold transition-all {% if session.get('tone') != 'friendly' %}bg-slate-800 text-white shadow-lg border border-slate-700{% else %}text-slate-500 hover:text-slate-300{% endif %}">
+                        Professional
+                    </button>
+                    <button type="button" 
+                            id="btn-friendly"
+                            onclick="setTone('friendly', this)" 
+                            class="tone-btn py-3 px-4 rounded-xl text-sm font-bold transition-all {% if session.get('tone') == 'friendly' %}bg-slate-800 text-white shadow-lg border border-slate-700{% else %}text-slate-500 hover:text-slate-300{% endif %}">
+                        Friendly
+                    </button>
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl shadow-xl shadow-blue-900/40 transition-all active:scale-95 uppercase tracking-widest text-xs">
+                Save All Changes
+            </button>
         </div>
     </form>
 </div>
 
-<style>
-    .tone-btn { background: none; }
-    .tone-btn.active { background: #3a3a3c; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-</style>
-
 <script>
     function setTone(val, btn) {
         document.getElementById('toneInput').value = val;
-        document.querySelectorAll('.tone-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        
+        // Remove active styles from all buttons
+        document.querySelectorAll('.tone-btn').forEach(b => {
+            b.classList.remove('bg-slate-800', 'text-white', 'shadow-lg', 'border', 'border-slate-700');
+            b.classList.add('text-slate-500');
+        });
+        
+        // Add active styles to clicked button
+        btn.classList.add('bg-slate-800', 'text-white', 'shadow-lg', 'border', 'border-slate-700');
+        btn.classList.remove('text-slate-500');
     }
 </script>
+
+<style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
 {% endblock %}
