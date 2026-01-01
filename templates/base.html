@@ -1,148 +1,41 @@
 <!DOCTYPE html>
-<html lang="{{ session.get('language', 'en') }}" dir="{{ t.dir }}">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}ERNESCO{% endblock %}</title>
-    <style>
-        :root { 
-            --dark-bg: #1a1a1c;
-            --card-bg: #252529;
-            --border-color: #333336;
-            --text-main: #ffffff;
-            --text-dim: #a1a1a6;
-            --apple-blue: #0071e3;
-            --glow-blue: #58a6ff;
-            --accent-orange: #ff9500;
-        }
-
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; 
-            background-color: var(--dark-bg); 
-            color: var(--text-main); 
-            margin: 0; 
-            text-align: inherit;
-            -webkit-font-smoothing: antialiased;
-        }
-
-        /* Apple Style Glass Navbar */
-        nav { 
-            width: 100%; 
-            background: rgba(26, 26, 28, 0.75); 
-            backdrop-filter: saturate(180%) blur(20px); 
-            border-bottom: 1px solid var(--border-color); 
-            position: sticky; 
-            top: 0; 
-            z-index: 1000; 
-            height: 52px;
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-container {
-            width: 90%;
-            max-width: 1000px;
-            margin: 0 auto;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brand {
-            text-decoration: none;
-            color: var(--text-main);
-            font-weight: 700;
-            font-size: 18px;
-            letter-spacing: -0.5px;
-        }
-
-        /* Nav Links - Center Area */
-        .nav-links {
-            display: flex;
-            gap: 25px;
-            position: absolute;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        .nav-links a { 
-            text-decoration: none; 
-            color: var(--text-dim); 
-            font-size: 12px; 
-            font-weight: 400; 
-            transition: color 0.3s; 
-        }
-
-        .nav-links a:hover { color: var(--text-main); }
-        .force-scan-btn { color: var(--accent-orange) !important; font-weight: 700; }
-
-        /* Auth Button - Right Side */
-        .auth-area {
-            display: flex;
-            align-items: center;
-        }
-
-        .auth-btn {
-            text-decoration: none;
-            font-size: 12px;
-            padding: 6px 14px;
-            border-radius: 20px;
-            transition: 0.3s;
-        }
-
-        .login-style {
-            background: var(--apple-blue);
-            color: white !important;
-        }
-
-        .logout-style {
-            color: var(--text-dim);
-            border: 1px solid var(--border-color);
-        }
-
-        .logout-style:hover {
-            border-color: #ff453a;
-            color: #ff453a !important;
-        }
-
-        /* Main Container */
-        .container { width: 90%; max-width: 700px; margin: 40px auto; }
-        .card { background: var(--card-bg); border-radius: 20px; padding: 30px; border: 1px solid var(--border-color); margin-bottom: 20px; }
-        h1 { font-size: 34px; font-weight: 700; margin-bottom: 20px; }
-
-        /* RTL Handling */
-        [dir="rtl"] .nav-links {
-            flex-direction: row-reverse;
-        }
-    </style>
+    <title>ERNESCO AI - {% block title %}{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-    <nav>
-        <div class="nav-container">
-            <a href="{{ url_for('index') }}" class="brand">ERNESCO</a>
+<body class="bg-[#0f172a] text-slate-200 font-sans min-h-screen selection:bg-blue-500/30">
 
-            {% if session.get('logged_in') %}
-            <div class="nav-links">
-                <a href="{{ url_for('index') }}">{{ t.dash }}</a>
-                <a href="{{ url_for('connect_email') }}">{{ t.conn }}</a>
-                <a href="{{ url_for('pending_actions') }}">{{ t.pend }}</a>
-                <a href="{{ url_for('settings') }}">{{ t.sett }}</a>
-                <a href="{{ url_for('force_scan') }}" class="force-scan-btn">⚡ {{ t.scan }}</a>
+    <nav class="bg-[#1e293b] border-b border-slate-700 px-6 py-4 flex justify-between items-center shadow-2xl sticky top-0 z-50">
+        <div class="flex items-center space-x-3">
+            <div class="bg-blue-600 p-2 rounded-lg shadow-lg shadow-blue-900/20">
+                <i class="fas fa-robot text-white"></i>
             </div>
-            {% endif %}
-
-            <div class="auth-area">
-                {% if session.get('logged_in') %}
-                    <a href="{{ url_for('logout') }}" class="auth-btn logout-style">Sign Out</a>
-                {% else %}
-                    <a href="{{ url_for('login') }}" class="auth-btn login-style">Sign In</a>
-                {% endif %}
-            </div>
+            <span class="text-xl font-bold tracking-tight text-white">ERNESCO AI</span>
+        </div>
+        
+        <div class="flex items-center space-x-6 text-sm font-medium">
+            <a href="{{ url_for('index') }}" class="hover:text-blue-400 transition-colors flex items-center gap-2">
+                <i class="fas fa-th-large"></i> {{ t.dash }}
+            </a>
+            <a href="{{ url_for('pending_actions') }}" class="hover:text-blue-400 transition-colors flex items-center gap-2">
+                <i class="fas fa-history"></i> {{ t.pend }}
+            </a>
+            <a href="{{ url_for('settings') }}" class="hover:text-blue-400 transition-colors flex items-center gap-2">
+                <i class="fas fa-cog"></i> {{ t.sett }}
+            </a>
+            <a href="{{ url_for('force_scan') }}" class="bg-blue-600 hover:bg-blue-700 px-5 py-2.5 rounded-xl text-white transition-all shadow-lg active:scale-95">
+                {{ t.scan }}
+            </a>
         </div>
     </nav>
 
-    <div class="container">
+    <div class="max-w-7xl mx-auto p-6 md:p-10">
         {% block content %}{% endblock %}
     </div>
+
 </body>
 </html>
