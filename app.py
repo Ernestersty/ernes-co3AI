@@ -83,13 +83,23 @@ scheduler.start()
 
 @app.route('/')
 def index():
+    # 1. Start with an empty list so the HTML doesn't crash
     emails = []
-    if session.get('logged_in'):
-        try:
-            emails = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(5).execute().data
-        except: pass
-    return render_template('index.html', logged_in=session.get('logged_in'), emails=emails)
+    is_logged_in = session.get('logged_in', False)
 
+    if is_logged_in:
+        try:
+            # 2. Try to fetch data, but don't crash if it fails
+            response = supabase.table("activity_logs").select("*").order("created_at", desc=True).limit(5).execute()
+            if response and hasattr(response, 'data'):
+                emails = response.data
+        except Exception as e:
+            # 3. If there is a database error, just print it and show an empty dashboard
+            print(f"Index Page DB Error: {e}")
+            emails = [] 
+
+    # 4. Always return the template with whatever data we have
+    return render_template('index.html', logged_in=is_logged_in, emails=emails)
 @app.route('/pending')
 def pending_actions():
     if not session.get("logged_in"): return redirect(url_for("login"))
