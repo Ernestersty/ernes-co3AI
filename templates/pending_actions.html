@@ -1,50 +1,79 @@
 {% extends "base.html" %}
+
 {% block title %}Pending Actions | ERNESCO{% endblock %}
 
 {% block content %}
-<div class="pending-container">
-    <h1 class="page-title">{{ t.pend }}</h1>
-
-    <div class="status-hero">
-        <div class="hero-layout">
-            <div class="stat-box">
-                <span class="stat-value">{{ count }}</span>
-                <span class="stat-label">Total Logs</span>
-            </div>
-            
-            <div class="progress-section">
-                <p class="section-tag">AI Analysis Progress</p>
-                <div class="progress-track">
-                    <div class="progress-fill" style="width: {{ percentage }}%;"></div>
-                </div>
-                <p class="progress-text">System is {{ percentage }}% Optimized</p>
-            </div>
-
-            <div class="stat-box">
-                <span class="stat-value active-text">{{ working_on }}</span>
-                <span class="stat-label">Currently Scanning</span>
-            </div>
+<div class="max-w-5xl mx-auto space-y-8 animate-[fadeIn_0.5s_ease]">
+    
+    <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+        <div>
+            <h1 class="text-3xl font-black text-white tracking-tight">{{ t.pend }}</h1>
+            <p class="text-slate-400 text-sm mt-1">Real-time status of the ERNESCO background processor.</p>
+        </div>
+        <div class="bg-blue-500/10 text-blue-400 border border-blue-500/20 px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-widest">
+            Scanner Status: <span class="text-white">Active</span>
         </div>
     </div>
 
-    <div class="action-list">
-        <h3 class="section-title">Background Processor</h3>
-        {% if emails %}
-            {% for email in emails %}
-            <div class="action-item">
-                <span class="item-subject">{{ email.subject }}</span>
-                <div class="thinking-pill">
-                    <span>Processing...</span>
-                    <div class="spinner-icon"></div>
-                </div>
+    <div class="bg-[#1e293b] p-8 rounded-3xl shadow-2xl border border-slate-700">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            
+            <div class="text-center md:text-left space-y-1">
+                <span class="block text-4xl font-black text-white">{{ count }}</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Total Logs</span>
             </div>
-            {% endfor %}
+            
+            <div class="space-y-4">
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-tighter text-center">AI Analysis Progress</p>
+                <div class="w-full bg-slate-800 rounded-full h-3 border border-slate-700 overflow-hidden">
+                    <div class="bg-gradient-to-r from-blue-600 to-blue-400 h-full rounded-full transition-all duration-1000" 
+                         style="width: {{ percentage }}%;"></div>
+                </div>
+                <p class="text-xs text-center text-slate-300 font-medium">System is <span class="text-blue-400">{{ percentage }}%</span> Optimized</p>
+            </div>
+
+            <div class="text-center md:text-right space-y-1">
+                <span class="block text-4xl font-black text-emerald-400">{{ working_on }}</span>
+                <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Currently Scanning</span>
+            </div>
+            
+        </div>
+    </div>
+
+    <div class="space-y-4">
+        <h3 class="text-sm font-bold text-slate-500 uppercase tracking-widest px-2">Background Processor Queue</h3>
+        
+        {% if emails %}
+            <div class="grid grid-cols-1 gap-3">
+                {% for email in emails %}
+                <div class="bg-[#1e293b] p-5 rounded-2xl border border-slate-700 flex justify-between items-center group hover:border-blue-500/50 transition-all">
+                    <div class="flex items-center gap-4">
+                        <div class="bg-slate-800 p-2 rounded-lg group-hover:bg-blue-500/10 transition-colors">
+                            <i class="fas fa-envelope text-slate-500 group-hover:text-blue-400 text-sm"></i>
+                        </div>
+                        <span class="font-bold text-slate-200">{{ email.subject }}</span>
+                    </div>
+                    
+                    <div class="flex items-center gap-3 bg-blue-500/5 px-4 py-2 rounded-xl border border-blue-500/10">
+                        <span class="text-[10px] font-black text-blue-400 uppercase tracking-widest">Processing</span>
+                        <div class="w-4 h-4 border-2 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         {% else %}
-            <div class="empty-card">
-                <p>No unread emails in the last scan. Your inbox is clear. 🌿</p>
-                <a href="{{ url_for('force_scan') }}" style="color: #58a6ff; font-size: 13px; text-decoration: none;">Run Manual Check →</a>
+            <div class="bg-[#1e293b]/50 p-16 rounded-3xl border-2 border-dashed border-slate-700 text-center space-y-4">
+                <div class="text-4xl">🌿</div>
+                <p class="text-slate-400 text-sm">No unread emails in the last scan. Your inbox is clear.</p>
+                <a href="{{ url_for('force_scan') }}" class="inline-block text-blue-400 text-xs font-bold uppercase tracking-widest hover:text-blue-300 transition-colors">
+                    Run Manual Check <i class="fas fa-chevron-right ml-1"></i>
+                </a>
             </div>
         {% endif %}
     </div>
 </div>
+
+<style>
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
 {% endblock %}
