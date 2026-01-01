@@ -1,77 +1,123 @@
 {% extends "base.html" %}
+
 {% block title %}Home | ERNESCO AI{% endblock %}
 
 {% block content %}
-<div class="home-container">
+<div class="max-w-7xl mx-auto space-y-10">
 
     {% if not logged_in %}
-    <div class="hero-section">
-        <div class="ai-badge">Gemini 1.5 Flash Integrated</div>
-        <h1 class="hero-title">Automate your inbox with <span class="glow-text">ERNESCO AI</span></h1>
-        <p class="hero-subtitle">The intelligent layer for your Gmail. ERNESCO reads, analyzes, and drafts professional replies in 15+ languages while you sleep.</p>
+    <div class="flex flex-col items-center text-center py-20 space-y-8 animate-[fadeIn_0.8s_ease]">
+        <div class="bg-blue-500/10 text-blue-400 border border-blue-500/30 px-4 py-1.5 rounded-full text-xs font-bold tracking-widest uppercase">
+            Gemini 1.5 Flash Integrated
+        </div>
+        <h1 class="text-5xl md:text-7xl font-black tracking-tighter text-white leading-tight">
+            Automate your inbox with <br><span class="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">ERNESCO AI</span>
+        </h1>
+        <p class="max-w-2xl text-slate-400 text-lg leading-relaxed">
+            The intelligent layer for your Gmail. ERNESCO reads, analyzes, and drafts professional replies in 15+ languages while you sleep.
+        </p>
         
-        <div class="hero-actions">
-            <a href="{{ url_for('login') }}" class="cta-button">Get Started for Free</a>
-            <a href="#features" class="secondary-button">How it works</a>
+        <div class="flex flex-col sm:flex-row gap-4 pt-4">
+            <a href="{{ url_for('login') }}" class="px-10 py-4 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl shadow-xl shadow-blue-900/40 transition-all active:scale-95">
+                Get Started for Free
+            </a>
+            <a href="#features" class="px-10 py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-2xl border border-slate-700 transition-all">
+                How it works
+            </a>
         </div>
-    </div>
 
-    <div class="preview-card card">
-        <div class="preview-header">
-            <div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div>
-            <span class="preview-label">Live Preview</span>
-        </div>
-        <div class="preview-body">
-            <p><strong>From:</strong> Potential Client</p>
-            <p><strong>Subject:</strong> Inquiry about services</p>
-            <div class="ai-typing">ERNESCO is drafting a reply...</div>
+        <div class="w-full max-w-lg bg-[#1e293b] border border-slate-700 rounded-2xl overflow-hidden shadow-2xl mt-12 text-left">
+            <div class="bg-slate-800/50 px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+                <div class="flex gap-1.5">
+                    <div class="w-3 h-3 rounded-full bg-red-500/50"></div>
+                    <div class="w-3 h-3 rounded-full bg-yellow-500/50"></div>
+                    <div class="w-3 h-3 rounded-full bg-green-500/50"></div>
+                </div>
+                <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Live Preview</span>
+            </div>
+            <div class="p-6 space-y-3">
+                <p class="text-sm text-slate-300"><strong>From:</strong> Potential Client</p>
+                <p class="text-sm text-slate-300"><strong>Subject:</strong> Inquiry about services</p>
+                <div class="text-blue-400 text-sm font-medium animate-pulse flex items-center gap-2">
+                    <i class="fas fa-pen-fancy"></i> ERNESCO is drafting a reply...
+                </div>
+            </div>
         </div>
     </div>
 
     {% else %}
-    <div class="dashboard-header">
-        <h1>{{ t.dash }}, <span class="glow-text">User</span></h1>
-        <div class="status-indicator">
-            <span class="pulse-dot"></span> AI Scanner: Active
+    <div class="flex flex-col md:flex-row justify-between items-end gap-4 mb-4">
+        <div>
+            <h1 class="text-3xl font-black text-white">{{ t.dash }}, <span class="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">User</span></h1>
+            <div class="flex items-center gap-2 text-sm text-slate-400 mt-1">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-green-500"></span>
+                </span>
+                AI Scanner: Active
+            </div>
         </div>
+        <a href="{{ url_for('force_scan') }}" class="px-4 py-2 border border-blue-500/50 text-blue-400 rounded-xl text-xs font-bold hover:bg-blue-500/10 transition-all">
+            ⚡ {{ t.scan }}
+        </a>
     </div>
 
-    <div class="activity-feed">
-        <div class="feed-header">
-            <h3 class="section-title">Recent Scan Logs (Latest 10)</h3>
-            <a href="{{ url_for('force_scan') }}" class="mini-scan-btn">⚡ {{ t.scan }}</a>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="bg-[#1e293b] p-8 rounded-3xl shadow-xl border border-slate-700 flex flex-col items-center justify-center space-y-6">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest">Performance</h3>
+            <div class="relative w-44 h-44">
+                <svg class="w-full h-full transform -rotate-90">
+                    <circle cx="88" cy="88" r="80" stroke="currentColor" stroke-width="12" fill="transparent" class="text-slate-800" />
+                    <circle cx="88" cy="88" r="80" stroke="currentColor" stroke-width="12" fill="transparent" 
+                            stroke-dasharray="502" stroke-dashoffset="{{ 502 - (502 * 0.75) }}" 
+                            class="text-blue-500 transition-all duration-1000" stroke-linecap="round" />
+                </svg>
+                <div class="absolute inset-0 flex items-center justify-center font-black text-3xl text-white">75%</div>
+            </div>
+            <p class="text-slate-400 text-sm">Processed today: <span class="text-white font-bold">10 Emails</span></p>
         </div>
 
-        {% if emails %}
-            {% for email in emails %}
-            <div class="card email-card">
-                <div class="email-info">
-                    <div class="subj-group">
-                        {% if 'Positive' in email.status %}
-                            <span class="mood-badge pos"></span>
-                        {% elif 'Negative' in email.status %}
-                            <span class="mood-badge neg"></span>
-                        {% else %}
-                            <span class="mood-badge neu"></span>
-                        {% endif %}
-                        <span class="email-subj">{{ email.subject }}</span>
+        <div class="lg:col-span-2 space-y-6">
+            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest">Recent Scan Logs</h3>
+            
+            {% if emails %}
+                {% for email in emails %}
+                <div class="bg-[#1e293b] p-6 rounded-2xl border border-slate-700 shadow-lg hover:border-slate-500 transition-all space-y-4">
+                    <div class="flex justify-between items-start">
+                        <div class="flex items-center gap-3">
+                            {% if 'Positive' in email.status %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                            {% elif 'Negative' in email.status %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"></div>
+                            {% else %}
+                                <div class="w-2.5 h-2.5 rounded-full bg-slate-500"></div>
+                            {% endif %}
+                            <span class="font-bold text-slate-200">{{ email.subject }}</span>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-500 bg-slate-800 px-2 py-1 rounded uppercase tracking-tighter">
+                            {{ email.status }}
+                        </span>
                     </div>
-                    <span class="email-status">{{ email.status }}</span>
+
+                    <div class="text-sm text-slate-400 italic leading-relaxed">
+                        "{{ email.ai_reply[:180] }}..."
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <button onclick="playAudio('{{ email.id }}')" id="btn-{{ email.id }}" class="flex items-center gap-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-lg border border-slate-600 transition-all">
+                            <i class="fas fa-volume-up text-blue-400"></i> Listen to AI Voice
+                        </button>
+                        <audio id="audio-{{ email.id }}" src="{{ url_for('listen', log_id=email.id) }}"></audio>
+                    </div>
                 </div>
-                <div class="email-preview">"{{ email.ai_reply[:180] }}..."</div>
-                <div class="card-actions">
-                    <button onclick="playAudio('{{ email.id }}')" class="listen-btn" id="btn-{{ email.id }}">
-                        <span>🔊</span> Listen to AI Voice
-                    </button>
-                    <audio id="audio-{{ email.id }}" src="{{ url_for('listen', log_id=email.id) }}"></audio>
+                {% endfor %}
+            {% else %}
+                <div class="bg-[#1e293b] p-12 rounded-2xl border border-dashed border-slate-700 text-center">
+                    <p class="text-slate-500">No activity yet. Gemini is fetching your latest emails... 🤖</p>
                 </div>
-            </div>
-            {% endfor %}
-        {% else %}
-            <div class="card empty-state">
-                <p>No activity yet. Gemini is fetching your latest 10 emails now... 🤖</p>
-            </div>
-        {% endif %}
+            {% endif %}
+        </div>
     </div>
     {% endif %}
 
@@ -83,41 +129,18 @@
         const btn = document.getElementById('btn-' + id);
         if (audio.paused) {
             audio.play();
-            btn.innerHTML = "<span>⏸</span> Playing...";
+            btn.innerHTML = '<i class="fas fa-pause text-yellow-400"></i> Playing...';
         } else {
             audio.pause();
-            btn.innerHTML = "<span>🔊</span> Listen to AI Voice";
+            btn.innerHTML = '<i class="fas fa-volume-up text-blue-400"></i> Listen to AI Voice';
         }
-        audio.onended = () => { btn.innerHTML = "<span>🔊</span> Listen to AI Voice"; };
+        audio.onended = () => { 
+            btn.innerHTML = '<i class="fas fa-volume-up text-blue-400"></i> Listen to AI Voice'; 
+        };
     }
 </script>
 
 <style>
-    .home-container { text-align: center; animation: fadeIn 0.8s ease; max-width: 800px; margin: 0 auto; }
-    .hero-section { padding: 60px 0; }
-    .ai-badge { background: rgba(88, 166, 255, 0.1); color: #58a6ff; padding: 6px 16px; border-radius: 20px; font-size: 12px; font-weight: 700; display: inline-block; margin-bottom: 20px; border: 1px solid rgba(88, 166, 255, 0.3); }
-    .hero-title { font-size: 56px; line-height: 1.1; margin-bottom: 24px; letter-spacing: -2px; }
-    .glow-text { background: linear-gradient(90deg, #58a6ff, #34c759); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-    .feed-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .mini-scan-btn { font-size: 12px; text-decoration: none; color: #58a6ff; border: 1px solid #58a6ff; padding: 4px 12px; border-radius: 6px; }
-
-    .email-card { text-align: left; padding: 20px; margin-bottom: 15px; border: 1px solid #333; position: relative; }
-    .subj-group { display: flex; align-items: center; gap: 10px; }
-    .mood-badge { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-    .pos { background: #34c759; box-shadow: 0 0 8px #34c759; }
-    .neg { background: #ff5f56; box-shadow: 0 0 8px #ff5f56; }
-    .neu { background: #a1a1a6; }
-
-    .email-subj { font-weight: 600; font-size: 16px; color: #fff; }
-    .email-status { font-size: 11px; background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 4px; color: #a1a1a6; }
-    .email-preview { color: #a1a1a6; font-size: 14px; margin: 12px 0; font-style: italic; line-height: 1.4; }
-    
-    .listen-btn { background: none; border: 1px solid #444; color: #fff; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; transition: 0.2s; }
-    .listen-btn:hover { background: #333; border-color: #58a6ff; }
-    
-    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 </style>
 {% endblock %}
